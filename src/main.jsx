@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import ReactDOM from 'react-dom/client';
 import './index.css';
+import './animations.css';   // <-- ANIMATIONS IMPORT ADDED HERE
 
 export default function AmikoBet() {
   const [screen, setScreen] = useState('landing');
@@ -676,34 +677,12 @@ export default function AmikoBet() {
     }
   };
 
-  // ==================== CSS ANIMATIONS ====================
-  const animationStyle = `
-    @keyframes gradientShift {
-      0% { background-position: 0% 50%; }
-      50% { background-position: 100% 50%; }
-      100% { background-position: 0% 50%; }
-    }
-    @keyframes float {
-      0% { transform: translateY(0px); }
-      50% { transform: translateY(-10px); }
-      100% { transform: translateY(0px); }
-    }
-    @keyframes pulse {
-      0% { opacity: 0.6; }
-      50% { opacity: 1; }
-      100% { opacity: 0.6; }
-    }
-    .floating { animation: float 3s ease-in-out infinite; }
-    .pulsing { animation: pulse 2s ease-in-out infinite; }
-  `;
-
   // ==================== RENDER FUNCTIONS ====================
 
   // Render landing/login/register
   if (screen === 'landing' || screen === 'login' || screen === 'register') {
     return (
       <div style={styles.container}>
-        <style>{animationStyle}</style>
         <div style={styles.backgroundEffect}></div>
         <div style={styles.card}>
           <h1 style={styles.title} className="floating">🎯 AMIKO BET</h1>
@@ -778,7 +757,6 @@ export default function AmikoBet() {
   if (screen === 'agentLogin') {
     return (
       <div style={styles.container}>
-        <style>{animationStyle}</style>
         <div style={styles.backgroundEffect}></div>
         <div style={styles.card}>
           <h1 style={styles.title} className="floating">👤 Agent Login</h1>
@@ -835,7 +813,6 @@ export default function AmikoBet() {
 
     return (
       <div style={styles.container}>
-        <style>{animationStyle}</style>
         <div style={styles.backgroundEffect}></div>
         <div style={styles.cardWide}>
           <div style={styles.flex}>
@@ -959,7 +936,6 @@ export default function AmikoBet() {
     if (!adminLoggedIn) {
       return (
         <div style={styles.container}>
-          <style>{animationStyle}</style>
           <div style={styles.backgroundEffect}></div>
           <div style={styles.card}>
             <h1 style={styles.title} className="floating">🔐 Admin Login</h1>
@@ -990,7 +966,6 @@ export default function AmikoBet() {
 
     return (
       <div style={styles.container}>
-        <style>{animationStyle}</style>
         <div style={styles.backgroundEffect}></div>
         <div style={styles.cardWide}>
           <div style={styles.flex}>
@@ -1104,7 +1079,6 @@ export default function AmikoBet() {
 
     return (
       <div style={styles.container}>
-        <style>{animationStyle}</style>
         <div style={styles.backgroundEffect}></div>
         <div style={styles.cardWide}>
           <div style={styles.flex}>
