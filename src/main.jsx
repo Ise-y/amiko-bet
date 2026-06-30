@@ -10,7 +10,7 @@ export default function AmikoBet() {
   const [users, setUsers] = useState(() => {
     const saved = localStorage.getItem('amikousers');
     return saved ? JSON.parse(saved) : {
-      '0911111111': { phone: '0911111111', password: 'demo123', balance: 5000, name: 'Demo User', kyc: true, role: 'user' },
+      '0911111111': { phone: '0911111111', password: 'demo123', balance: 5000, name: 'Demo User', kyc: true, role: 'user', rank: 'Gold', wins: 12, losses: 3 },
     };
   });
   
@@ -44,12 +44,13 @@ export default function AmikoBet() {
   const [pendingDeposits, setPendingDeposits] = useState([]);
   const [agentWithdrawals, setAgentWithdrawals] = useState([]);
   
-  // ===== NAVIGATION STATES =====
   const [activeTab, setActiveTab] = useState('sports');
   const [showDepositModal, setShowDepositModal] = useState(false);
   const [showWithdrawModal, setShowWithdrawModal] = useState(false);
+  const [selectedMatch, setSelectedMatch] = useState(null);
+  const [betAmount, setBetAmount] = useState('');
   
-  // ===== AGENTS DATA WITH ONLINE STATUS =====
+  // ===== AGENTS DATA =====
   const [agents, setAgents] = useState(() => {
     const saved = localStorage.getItem('amikoAgents');
     if (saved) {
@@ -63,7 +64,9 @@ export default function AmikoBet() {
         commission: '5%',
         phone: '0911000001',
         password: 'agent123',
-        online: false
+        online: false,
+        rating: 4.9,
+        totalTransactions: 156
       },
       agent2: { 
         id: 'agent2', 
@@ -72,7 +75,9 @@ export default function AmikoBet() {
         commission: '3%',
         phone: '0911000002',
         password: 'agent123',
-        online: false
+        online: false,
+        rating: 4.7,
+        totalTransactions: 89
       },
       agent3: { 
         id: 'agent3', 
@@ -81,7 +86,9 @@ export default function AmikoBet() {
         commission: '4%',
         phone: '0911000003',
         password: 'agent123',
-        online: false
+        online: false,
+        rating: 4.8,
+        totalTransactions: 124
       },
     };
   });
@@ -93,7 +100,6 @@ export default function AmikoBet() {
     localStorage.removeItem('amikoAdminLoggedIn');
   };
 
-  // ===== SWITCH ACCOUNT =====
   const switchAccount = () => {
     clearAllSessions();
     setCurrentUser(null);
@@ -103,7 +109,7 @@ export default function AmikoBet() {
     setMessage('🔄 Logged out. You can now login with a different account.');
   };
 
-  // ===== AUTO-LOGIN ON PAGE LOAD =====
+  // ===== AUTO-LOGIN =====
   useEffect(() => {
     const url = window.location.href;
     if (url.includes('/admin')) {
@@ -145,7 +151,6 @@ export default function AmikoBet() {
     }
   }, []);
 
-  // ===== SET AGENT ONLINE/OFFLINE =====
   const setAgentOnline = (agentId, status) => {
     const updatedAgents = { ...agents };
     if (updatedAgents[agentId]) {
@@ -155,12 +160,10 @@ export default function AmikoBet() {
     }
   };
 
-  // ===== GET ONLINE AGENTS =====
   const getOnlineAgents = () => {
     return Object.values(agents).filter(agent => agent.online === true);
   };
 
-  // Save agents data
   useEffect(() => {
     localStorage.setItem('amikoAgents', JSON.stringify(agents));
   }, [agents]);
@@ -204,9 +207,9 @@ export default function AmikoBet() {
     }
     setUsers({
       ...users,
-      [phone]: { phone, password, balance: 0, name: 'User', kyc: false, role: 'user' }
+      [phone]: { phone, password, balance: 100, name: 'User', kyc: false, role: 'user', rank: 'Bronze', wins: 0, losses: 0 }
     });
-    setMessage('Registration successful! Please login.');
+    setMessage('Registration successful! You get 100 ETB Welcome Bonus! 🎉');
     setScreen('login');
   };
 
@@ -290,6 +293,39 @@ export default function AmikoBet() {
     setWithdrawAmount('');
     setShowWithdrawModal(false);
     setMessage(`Withdrawal request of ${amount} ETB submitted for approval`);
+  };
+
+  const handlePlaceBet = (match, selection, odds) => {
+    if (!betAmount || isNaN(betAmount) || Number(betAmount) <= 0) {
+      setMessage('Enter valid bet amount');
+      return;
+    }
+    const amount = Number(betAmount);
+    if (amount > currentUser.balance) {
+      setMessage('Insufficient balance');
+      return;
+    }
+    
+    const updatedUser = { ...currentUser, balance: currentUser.balance - amount };
+    setUsers({ ...users, [currentUser.phone]: updatedUser });
+    setCurrentUser(updatedUser);
+    
+    setTransactions([...transactions, {
+      id: Date.now(),
+      amount: amount,
+      type: 'bet',
+      status: 'pending',
+      date: new Date().toISOString(),
+      userPhone: currentUser.phone,
+      match: `${match.home} vs ${match.away}`,
+      selection: selection,
+      odds: odds,
+      potentialWin: (amount * odds).toFixed(2)
+    }]);
+    
+    setBetAmount('');
+    setSelectedMatch(null);
+    setMessage(`✅ Bet placed: ${amount} ETB on ${match.home} vs ${match.away} - ${selection} at ${odds}x`);
   };
 
   // ==================== ADMIN FUNCTIONS ====================
@@ -420,7 +456,7 @@ export default function AmikoBet() {
     setMessage('Logged out successfully!');
   };
 
-  // ==================== ZPLAY-STYLE STYLES ====================
+  // ==================== STYLES ====================
 
   const styles = {
     container: {
@@ -429,7 +465,6 @@ export default function AmikoBet() {
       color: '#ffffff',
       fontFamily: '"Segoe UI", Tahoma, Geneva, Verdana, sans-serif',
     },
-    // Top Navigation Bar
     topNav: {
       background: 'linear-gradient(135deg, #0d1b2a, #1a0a2e)',
       padding: '10px 20px',
@@ -438,7 +473,10 @@ export default function AmikoBet() {
       alignItems: 'center',
       borderBottom: '1px solid rgba(255,255,255,0.05)',
       flexWrap: 'wrap',
-      gap: '10px'
+      gap: '10px',
+      position: 'sticky',
+      top: 0,
+      zIndex: 100
     },
     logo: {
       fontSize: '1.8em',
@@ -446,6 +484,7 @@ export default function AmikoBet() {
       background: 'linear-gradient(135deg, #00BFFF, #7B2FBE)',
       WebkitBackgroundClip: 'text',
       WebkitTextFillColor: 'transparent',
+      cursor: 'pointer'
     },
     topNavLinks: {
       display: 'flex',
@@ -456,7 +495,7 @@ export default function AmikoBet() {
     navLink: {
       color: 'rgba(255,255,255,0.7)',
       textDecoration: 'none',
-      fontSize: '0.9em',
+      fontSize: '0.85em',
       padding: '8px 12px',
       borderRadius: '8px',
       cursor: 'pointer',
@@ -469,7 +508,15 @@ export default function AmikoBet() {
       color: '#00BFFF',
       background: 'rgba(0,191,255,0.1)',
     },
-    // Balance Display
+    // Welcome Banner
+    welcomeBanner: {
+      background: 'linear-gradient(135deg, rgba(0,191,255,0.1), rgba(123,47,190,0.1))',
+      padding: '20px',
+      margin: '10px 20px',
+      borderRadius: '16px',
+      border: '1px solid rgba(0,191,255,0.1)',
+      textAlign: 'center'
+    },
     balanceBar: {
       background: 'rgba(0,191,255,0.05)',
       padding: '15px 20px',
@@ -487,13 +534,14 @@ export default function AmikoBet() {
     },
     actionButtons: {
       display: 'flex',
-      gap: '10px'
+      gap: '10px',
+      flexWrap: 'wrap'
     },
     actionBtn: {
-      padding: '10px 30px',
+      padding: '10px 25px',
       borderRadius: '25px',
       border: 'none',
-      fontSize: '1em',
+      fontSize: '0.9em',
       fontWeight: '700',
       cursor: 'pointer',
       transition: 'all 0.3s'
@@ -507,11 +555,9 @@ export default function AmikoBet() {
       color: '#fff',
       border: '1px solid rgba(255,255,255,0.2)',
     },
-    // Main Content
     mainContent: {
       padding: '20px',
     },
-    // Tab Navigation
     tabNav: {
       display: 'flex',
       gap: '5px',
@@ -522,12 +568,12 @@ export default function AmikoBet() {
       flexWrap: 'wrap'
     },
     tabBtn: {
-      padding: '10px 20px',
+      padding: '10px 18px',
       borderRadius: '8px',
       border: 'none',
       background: 'transparent',
       color: 'rgba(255,255,255,0.6)',
-      fontSize: '0.9em',
+      fontSize: '0.85em',
       fontWeight: '600',
       cursor: 'pointer',
       transition: 'all 0.3s',
@@ -537,7 +583,6 @@ export default function AmikoBet() {
       color: '#00BFFF',
       background: 'rgba(0,191,255,0.1)',
     },
-    // Sports Section
     sportsGrid: {
       display: 'grid',
       gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))',
@@ -548,6 +593,7 @@ export default function AmikoBet() {
       borderRadius: '12px',
       padding: '15px',
       border: '1px solid rgba(255,255,255,0.05)',
+      transition: 'all 0.3s'
     },
     matchTeams: {
       display: 'flex',
@@ -572,7 +618,6 @@ export default function AmikoBet() {
       transition: 'all 0.3s',
       textAlign: 'center'
     },
-    // Casino Games Grid
     gamesGrid: {
       display: 'grid',
       gridTemplateColumns: 'repeat(auto-fill, minmax(150px, 1fr))',
@@ -595,7 +640,6 @@ export default function AmikoBet() {
       fontSize: '0.9em',
       fontWeight: '600',
     },
-    // Modal
     modalOverlay: {
       position: 'fixed',
       top: 0,
@@ -622,19 +666,67 @@ export default function AmikoBet() {
       marginBottom: '20px',
       textAlign: 'center'
     },
-    // Footer
+    input: {
+      width: '100%',
+      padding: '14px',
+      margin: '10px 0',
+      borderRadius: '12px',
+      border: '1px solid rgba(255,255,255,0.1)',
+      background: 'rgba(255,255,255,0.05)',
+      color: '#fff',
+      fontSize: '16px',
+      outline: 'none',
+      transition: 'all 0.3s',
+      boxSizing: 'border-box'
+    },
+    message: {
+      padding: '10px',
+      borderRadius: '10px',
+      margin: '10px 0',
+      textAlign: 'center',
+      background: 'rgba(0,191,255,0.1)',
+      border: '1px solid rgba(0,191,255,0.2)'
+    },
+    flex: {
+      display: 'flex',
+      justifyContent: 'space-between',
+      alignItems: 'center',
+      gap: '10px',
+      flexWrap: 'wrap'
+    },
     footer: {
       background: '#0d0d1a',
       padding: '30px 20px',
       marginTop: '30px',
       borderTop: '1px solid rgba(255,255,255,0.05)',
       textAlign: 'center'
+    },
+    rankBadge: {
+      display: 'inline-block',
+      padding: '4px 14px',
+      borderRadius: '20px',
+      fontSize: '0.8em',
+      fontWeight: '700',
+      marginLeft: '10px'
+    },
+    statsGrid: {
+      display: 'grid',
+      gridTemplateColumns: 'repeat(auto-fit, minmax(150px, 1fr))',
+      gap: '15px',
+      margin: '15px 0'
+    },
+    statCard: {
+      background: 'rgba(255,255,255,0.03)',
+      padding: '15px',
+      borderRadius: '12px',
+      textAlign: 'center',
+      border: '1px solid rgba(255,255,255,0.05)'
     }
   };
 
   // ==================== RENDER FUNCTIONS ====================
 
-  // Render landing/login/register
+  // Landing/Login/Register
   if (screen === 'landing' || screen === 'login' || screen === 'register') {
     return (
       <div style={styles.container}>
@@ -649,20 +741,20 @@ export default function AmikoBet() {
             </h1>
             <p style={{textAlign: 'center', opacity: 0.6, marginBottom: '20px'}}>
               {screen === 'landing' ? 'The Future of Betting in Ethiopia' : 
-               screen === 'login' ? 'Welcome back!' : 'Join the revolution'}
+               screen === 'login' ? 'Welcome back!' : 'Join the revolution - Get 100 ETB Welcome Bonus!'}
             </p>
             
-            {message && <div style={{...styles.message, ...{padding: '10px', borderRadius: '10px', margin: '10px 0', textAlign: 'center', background: 'rgba(0,191,255,0.1)', border: '1px solid rgba(0,191,255,0.2)'}}}>{message}</div>}
+            {message && <div style={styles.message}>{message}</div>}
             
             <input
-              style={{...styles.input, ...{width: '100%', padding: '14px', margin: '10px 0', borderRadius: '12px', border: '1px solid rgba(255,255,255,0.1)', background: 'rgba(255,255,255,0.05)', color: '#fff', fontSize: '16px'}}}
+              style={styles.input}
               placeholder="📱 Phone Number"
               value={phone}
               onChange={(e) => setPhone(e.target.value)}
               type="tel"
             />
             <input
-              style={{...styles.input, ...{width: '100%', padding: '14px', margin: '10px 0', borderRadius: '12px', border: '1px solid rgba(255,255,255,0.1)', background: 'rgba(255,255,255,0.05)', color: '#fff', fontSize: '16px'}}}
+              style={styles.input}
               placeholder="🔑 Password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
@@ -714,8 +806,7 @@ export default function AmikoBet() {
     );
   }
 
-  // ==================== AGENT LOGIN SCREEN ====================
-
+  // Agent Login
   if (screen === 'agentLogin') {
     return (
       <div style={styles.container}>
@@ -729,17 +820,17 @@ export default function AmikoBet() {
               Login to manage deposits and withdrawals
             </p>
             
-            {message && <div style={{...styles.message, ...{padding: '10px', borderRadius: '10px', margin: '10px 0', textAlign: 'center', background: 'rgba(0,191,255,0.1)', border: '1px solid rgba(0,191,255,0.2)'}}}>{message}</div>}
+            {message && <div style={styles.message}>{message}</div>}
             
             <input
-              style={{...styles.input, ...{width: '100%', padding: '14px', margin: '10px 0', borderRadius: '12px', border: '1px solid rgba(255,255,255,0.1)', background: 'rgba(255,255,255,0.05)', color: '#fff', fontSize: '16px'}}}
+              style={styles.input}
               placeholder="📱 Agent Phone Number"
               value={agentPhone}
               onChange={(e) => setAgentPhone(e.target.value)}
               type="tel"
             />
             <input
-              style={{...styles.input, ...{width: '100%', padding: '14px', margin: '10px 0', borderRadius: '12px', border: '1px solid rgba(255,255,255,0.1)', background: 'rgba(255,255,255,0.05)', color: '#fff', fontSize: '16px'}}}
+              style={styles.input}
               placeholder="🔑 Agent Password"
               value={agentPassword}
               onChange={(e) => setAgentPassword(e.target.value)}
@@ -765,8 +856,7 @@ export default function AmikoBet() {
     );
   }
 
-  // ==================== AGENT DASHBOARD ====================
-
+  // Agent Dashboard
   if (screen === 'agentDashboard' && agentLoggedIn) {
     const totalDeposits = pendingDeposits.reduce((sum, t) => sum + t.amount, 0);
     const totalWithdrawals = agentWithdrawals.reduce((sum, t) => sum + t.amount, 0);
@@ -792,27 +882,28 @@ export default function AmikoBet() {
           <div>
             <p style={{opacity: 0.6, fontSize: '0.9em'}}>Welcome, {agentLoggedIn.name}</p>
             <p style={{fontSize: '0.8em', opacity: 0.5}}>📱 {agentLoggedIn.telebirr}</p>
+            <p style={{fontSize: '0.8em', opacity: 0.5}}>⭐ Rating: {agentLoggedIn.rating}/5.0</p>
           </div>
           <div style={styles.actionButtons}>
             <span style={{...styles.balanceAmount, fontSize: '1.2em'}}>💰 {totalCommission.toFixed(2)} ETB Commission</span>
           </div>
         </div>
 
-        {message && <div style={{...styles.message, ...{padding: '10px', borderRadius: '10px', margin: '10px 20px', textAlign: 'center', background: 'rgba(0,191,255,0.1)', border: '1px solid rgba(0,191,255,0.2)'}}}>{message}</div>}
+        {message && <div style={{...styles.message, margin: '10px 20px'}}>{message}</div>}
 
         <div style={styles.mainContent}>
-          <div style={{display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '15px', marginBottom: '20px'}}>
-            <div style={styles.gameCard}>
+          <div style={styles.statsGrid}>
+            <div style={styles.statCard}>
               <h4>💰 Pending Deposits</h4>
               <p style={{fontSize: '2em', color: '#FFA500'}}>{pendingDeposits.length}</p>
               <p>{totalDeposits} ETB</p>
             </div>
-            <div style={styles.gameCard}>
+            <div style={styles.statCard}>
               <h4>💸 Pending Withdrawals</h4>
               <p style={{fontSize: '2em', color: '#FF6B6B'}}>{agentWithdrawals.length}</p>
               <p>{totalWithdrawals} ETB</p>
             </div>
-            <div style={styles.gameCard}>
+            <div style={styles.statCard}>
               <h4>📊 Commission</h4>
               <p style={{fontSize: '2em', color: '#00E5FF'}}>{totalCommission.toFixed(2)} ETB</p>
               <p>From {completedDeposits.length} deposits</p>
@@ -873,8 +964,7 @@ export default function AmikoBet() {
     );
   }
 
-  // ==================== ADMIN PANEL ====================
-
+  // Admin Panel
   if (screen === 'admin' || adminLoggedIn) {
     if (!adminLoggedIn) {
       return (
@@ -885,9 +975,9 @@ export default function AmikoBet() {
           <div style={{maxWidth: '450px', margin: '40px auto', padding: '0 20px'}}>
             <div style={styles.modalContent}>
               <h1 style={styles.modalTitle}>Admin Access</h1>
-              {message && <div style={{...styles.message, ...{padding: '10px', borderRadius: '10px', margin: '10px 0', textAlign: 'center', background: 'rgba(0,191,255,0.1)', border: '1px solid rgba(0,191,255,0.2)'}}}>{message}</div>}
+              {message && <div style={styles.message}>{message}</div>}
               <input
-                style={{...styles.input, ...{width: '100%', padding: '14px', margin: '10px 0', borderRadius: '12px', border: '1px solid rgba(255,255,255,0.1)', background: 'rgba(255,255,255,0.05)', color: '#fff', fontSize: '16px'}}}
+                style={styles.input}
                 placeholder="Admin Password"
                 value={adminPass}
                 onChange={(e) => setAdminPass(e.target.value)}
@@ -909,6 +999,7 @@ export default function AmikoBet() {
     const pendingDepositsAll = transactions.filter(t => t.type === 'deposit' && t.status === 'pending');
     const totalUsers = Object.keys(users).length;
     const onlineAgents = getOnlineAgents();
+    const totalBets = transactions.filter(t => t.type === 'bet').length;
 
     return (
       <div style={styles.container}>
@@ -920,25 +1011,29 @@ export default function AmikoBet() {
           </div>
         </div>
 
-        {message && <div style={{...styles.message, ...{padding: '10px', borderRadius: '10px', margin: '10px 20px', textAlign: 'center', background: 'rgba(0,191,255,0.1)', border: '1px solid rgba(0,191,255,0.2)'}}}>{message}</div>}
+        {message && <div style={{...styles.message, margin: '10px 20px'}}>{message}</div>}
 
         <div style={styles.mainContent}>
-          <div style={{display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '15px', marginBottom: '20px'}}>
-            <div style={styles.gameCard}>
+          <div style={styles.statsGrid}>
+            <div style={styles.statCard}>
               <h3>👤 Users</h3>
               <p style={{fontSize: '2em'}}>{totalUsers}</p>
             </div>
-            <div style={styles.gameCard}>
+            <div style={styles.statCard}>
               <h3>💰 Pending Deposits</h3>
               <p style={{fontSize: '2em'}}>{pendingDepositsAll.length}</p>
             </div>
-            <div style={styles.gameCard}>
+            <div style={styles.statCard}>
               <h3>⏳ Pending Withdrawals</h3>
               <p style={{fontSize: '2em'}}>{pendingWithdrawals.length}</p>
             </div>
-            <div style={styles.gameCard}>
+            <div style={styles.statCard}>
               <h3>🟢 Online Agents</h3>
               <p style={{fontSize: '2em', color: '#00FF00'}}>{onlineAgents.length}</p>
+            </div>
+            <div style={styles.statCard}>
+              <h3>🎯 Total Bets</h3>
+              <p style={{fontSize: '2em'}}>{totalBets}</p>
             </div>
           </div>
 
@@ -948,32 +1043,17 @@ export default function AmikoBet() {
           ) : (
             onlineAgents.map((agent, i) => (
               <div key={i} style={styles.matchCard}>
-                <p><strong>{agent.name}</strong> - 📱 {agent.phone}</p>
-                <p>💰 Commission: {agent.commission}</p>
+                <p><strong>{agent.name}</strong> - 📱 {agent.phone} - ⭐ {agent.rating}/5.0</p>
+                <p>💰 Commission: {agent.commission} | 📊 {agent.totalTransactions} transactions</p>
               </div>
             ))
           )}
-
-          <h3>📊 All Agents</h3>
-          {Object.values(agents).map((agent, i) => (
-            <div key={i} style={styles.matchCard}>
-              <div style={styles.flex}>
-                <div>
-                  <p><strong>{agent.name}</strong> - 📱 {agent.phone}</p>
-                  <p>💰 Commission: {agent.commission}</p>
-                </div>
-                <span style={agent.online ? {color: '#00FF00', fontWeight: 'bold'} : {color: '#FF4444', fontWeight: 'bold'}}>
-                  {agent.online ? '🟢 ONLINE' : '🔴 OFFLINE'}
-                </span>
-              </div>
-            </div>
-          ))}
 
           <h3>📊 All Users</h3>
           {Object.values(users).map((user, i) => (
             <div key={i} style={styles.matchCard}>
               <p><strong>{user.name}</strong> - 📱 {user.phone}</p>
-              <p>💰 Balance: {user.balance} ETB</p>
+              <p>💰 Balance: {user.balance} ETB | 🏅 {user.rank} | 🏆 Wins: {user.wins || 0}</p>
             </div>
           ))}
 
@@ -1006,13 +1086,15 @@ export default function AmikoBet() {
     );
   }
 
-  // ==================== USER DASHBOARD (ZPLAY-STYLE) ====================
+  // ==================== USER DASHBOARD (ZPLAY-STYLE WITH RANK) ====================
 
   if (screen === 'dashboard' && currentUser) {
     const userTransactions = transactions.filter(t => t.userPhone === currentUser.phone);
     const pendingWithdrawals = userTransactions.filter(t => t.type === 'withdrawal' && t.status === 'pending');
     const pendingDepositsUser = userTransactions.filter(t => t.type === 'deposit' && t.status === 'pending');
     const onlineAgents = getOnlineAgents();
+    const userBets = userTransactions.filter(t => t.type === 'bet');
+    const totalWins = userBets.filter(t => t.status === 'approved').length;
 
     // Sports matches data
     const matches = [
@@ -1022,7 +1104,6 @@ export default function AmikoBet() {
       { home: 'England', away: 'Germany', odds: { home: 19.0, draw: 5.55, away: 13 } },
     ];
 
-    // Casino games
     const casinoGames = [
       { icon: '🎰', name: 'Slots' },
       { icon: '🎲', name: 'Live Casino' },
@@ -1030,13 +1111,21 @@ export default function AmikoBet() {
       { icon: '🏏', name: 'Virtual Sport' },
     ];
 
-    // Crash games
     const crashGames = [
       { icon: '🚀', name: 'ZPLAY JETX' },
       { icon: '💥', name: 'Crash' },
       { icon: '🎯', name: 'Keno' },
       { icon: '🃏', name: 'HiLo' },
     ];
+
+    // Rank colors
+    const rankColors = {
+      'Bronze': '#CD7F32',
+      'Silver': '#C0C0C0',
+      'Gold': '#FFD700',
+      'Platinum': '#E5E4E2',
+      'Diamond': '#B9F2FF'
+    };
 
     return (
       <div style={styles.container}>
@@ -1050,14 +1139,23 @@ export default function AmikoBet() {
           </div>
         </div>
 
+        {/* Welcome Banner */}
+        <div style={styles.welcomeBanner}>
+          <h2>🎉 Welcome {currentUser.name || 'User'}!</h2>
+          <p style={{opacity: 0.7}}>Your Rank: <span style={{color: rankColors[currentUser.rank] || '#FFD700', fontWeight: 'bold'}}>{currentUser.rank}</span></p>
+          <p style={{fontSize: '0.9em', opacity: 0.5}}>🏆 {totalWins} Wins | 📊 {userBets.length} Bets Placed</p>
+        </div>
+
         {/* Balance Bar */}
         <div style={styles.balanceBar}>
           <div>
-            <p style={{opacity: 0.6, fontSize: '0.9em'}}>👤 {currentUser.name || 'User'}</p>
-            <p style={{fontSize: '0.8em', opacity: 0.5}}>📱 {currentUser.phone}</p>
+            <p style={{opacity: 0.6, fontSize: '0.9em'}}>💰 Balance</p>
+            <span style={styles.balanceAmount}>{currentUser.balance} ETB</span>
+            {pendingDepositsUser.length > 0 && (
+              <p style={{fontSize: '0.8em', color: '#FFA500'}}>⏳ {pendingDepositsUser.length} deposit(s) pending</p>
+            )}
           </div>
           <div style={styles.actionButtons}>
-            <span style={styles.balanceAmount}>💰 {currentUser.balance} ETB</span>
             <button style={{...styles.actionBtn, ...styles.depositBtn}} onClick={() => setShowDepositModal(true)}>
               💳 Deposit
             </button>
@@ -1067,7 +1165,7 @@ export default function AmikoBet() {
           </div>
         </div>
 
-        {message && <div style={{...styles.message, ...{padding: '10px', borderRadius: '10px', margin: '10px 20px', textAlign: 'center', background: 'rgba(0,191,255,0.1)', border: '1px solid rgba(0,191,255,0.2)'}}}>{message}</div>}
+        {message && <div style={{...styles.message, margin: '10px 20px'}}>{message}</div>}
 
         {/* Tab Navigation */}
         <div style={{...styles.tabNav, padding: '0 20px'}}>
@@ -1098,15 +1196,15 @@ export default function AmikoBet() {
                       <span>{match.away}</span>
                     </div>
                     <div style={styles.oddsRow}>
-                      <button style={styles.oddsBtn}>
+                      <button style={styles.oddsBtn} onClick={() => {setSelectedMatch(match); setBetAmount('');}}>
                         <div>W1</div>
                         <div style={{color: '#00E5FF'}}>{match.odds.home}</div>
                       </button>
-                      <button style={styles.oddsBtn}>
+                      <button style={styles.oddsBtn} onClick={() => {setSelectedMatch(match); setBetAmount('');}}>
                         <div>X</div>
                         <div style={{color: '#00E5FF'}}>{match.odds.draw}</div>
                       </button>
-                      <button style={styles.oddsBtn}>
+                      <button style={styles.oddsBtn} onClick={() => {setSelectedMatch(match); setBetAmount('');}}>
                         <div>W2</div>
                         <div style={{color: '#00E5FF'}}>{match.odds.away}</div>
                       </button>
@@ -1114,6 +1212,35 @@ export default function AmikoBet() {
                   </div>
                 ))}
               </div>
+
+              {/* Bet Placement Section */}
+              {selectedMatch && (
+                <div style={{...styles.modalContent, maxWidth: '500px', margin: '20px auto'}}>
+                  <h3 style={styles.modalTitle}>Place Bet</h3>
+                  <p>{selectedMatch.home} vs {selectedMatch.away}</p>
+                  <input
+                    style={styles.input}
+                    placeholder="Amount to bet (ETB)"
+                    value={betAmount}
+                    onChange={(e) => setBetAmount(e.target.value)}
+                    type="number"
+                  />
+                  <div style={styles.oddsRow}>
+                    <button style={{...styles.oddsBtn, ...{background: 'rgba(0,191,255,0.2)'}}} onClick={() => handlePlaceBet(selectedMatch, 'W1', selectedMatch.odds.home)}>
+                      W1 {selectedMatch.odds.home}x
+                    </button>
+                    <button style={{...styles.oddsBtn, ...{background: 'rgba(0,191,255,0.2)'}}} onClick={() => handlePlaceBet(selectedMatch, 'Draw', selectedMatch.odds.draw)}>
+                      Draw {selectedMatch.odds.draw}x
+                    </button>
+                    <button style={{...styles.oddsBtn, ...{background: 'rgba(0,191,255,0.2)'}}} onClick={() => handlePlaceBet(selectedMatch, 'W2', selectedMatch.odds.away)}>
+                      W2 {selectedMatch.odds.away}x
+                    </button>
+                  </div>
+                  <button style={{...styles.actionBtn, ...styles.withdrawBtn, width: '100%', marginTop: '10px'}} onClick={() => setSelectedMatch(null)}>
+                    Cancel
+                  </button>
+                </div>
+              )}
             </>
           )}
 
@@ -1219,10 +1346,12 @@ export default function AmikoBet() {
               <div style={styles.flex}>
                 <div>
                   <p style={{fontWeight: '600'}}>
-                    {t.type === 'deposit' ? '💰 Deposit' : '💸 Withdrawal'}
+                    {t.type === 'deposit' ? '💰 Deposit' : t.type === 'withdrawal' ? '💸 Withdrawal' : '🎯 Bet'}
                   </p>
                   <p style={{fontSize: '0.9em', opacity: 0.6}}>
-                    {t.amount} ETB • Agent: {t.agentName || 'Unknown'}
+                    {t.amount} ETB {t.type === 'bet' ? `on ${t.match || ''}` : ''} 
+                    {t.type === 'bet' ? ` - ${t.selection || ''}` : `• Agent: ${t.agentName || 'Unknown'}`}
+                    {t.potentialWin ? ` | Potential Win: ${t.potentialWin} ETB` : ''}
                   </p>
                 </div>
                 <span style={
@@ -1253,20 +1382,20 @@ export default function AmikoBet() {
               ) : (
                 <>
                   <input
-                    style={{...styles.input, ...{width: '100%', padding: '14px', margin: '10px 0', borderRadius: '12px', border: '1px solid rgba(255,255,255,0.1)', background: 'rgba(255,255,255,0.05)', color: '#fff', fontSize: '16px'}}}
+                    style={styles.input}
                     placeholder="Amount (ETB)"
                     value={depositAmount}
                     onChange={(e) => setDepositAmount(e.target.value)}
                     type="number"
                   />
                   <select
-                    style={{...styles.input, ...{width: '100%', padding: '14px', margin: '10px 0', borderRadius: '12px', border: '1px solid rgba(255,255,255,0.1)', background: 'rgba(255,255,255,0.05)', color: '#fff', fontSize: '16px'}}}
+                    style={styles.input}
                     value={selectedAgent}
                     onChange={(e) => setSelectedAgent(e.target.value)}
                   >
                     {onlineAgents.map((agent) => (
                       <option key={agent.id} value={agent.id} style={{color: '#000'}}>
-                        🟢 {agent.name} - {agent.telebirr}
+                        🟢 {agent.name} - {agent.telebirr} (⭐ {agent.rating})
                       </option>
                     ))}
                   </select>
@@ -1292,21 +1421,21 @@ export default function AmikoBet() {
               ) : (
                 <>
                   <input
-                    style={{...styles.input, ...{width: '100%', padding: '14px', margin: '10px 0', borderRadius: '12px', border: '1px solid rgba(255,255,255,0.1)', background: 'rgba(255,255,255,0.05)', color: '#fff', fontSize: '16px'}}}
+                    style={styles.input}
                     placeholder="Amount (ETB)"
                     value={withdrawAmount}
                     onChange={(e) => setWithdrawAmount(e.target.value)}
                     type="number"
                   />
-                  <p style={{fontSize: '0.8em', opacity: 0.5}}>Max: {currentUser.balance} ETB</p>
+                  <p style={{fontSize: '0.8em', opacity: 0.5}}>Available: {currentUser.balance} ETB</p>
                   <select
-                    style={{...styles.input, ...{width: '100%', padding: '14px', margin: '10px 0', borderRadius: '12px', border: '1px solid rgba(255,255,255,0.1)', background: 'rgba(255,255,255,0.05)', color: '#fff', fontSize: '16px'}}}
+                    style={styles.input}
                     value={selectedAgent}
                     onChange={(e) => setSelectedAgent(e.target.value)}
                   >
                     {onlineAgents.map((agent) => (
                       <option key={agent.id} value={agent.id} style={{color: '#000'}}>
-                        🟢 {agent.name} - {agent.telebirr}
+                        🟢 {agent.name} - {agent.telebirr} (⭐ {agent.rating})
                       </option>
                     ))}
                   </select>
