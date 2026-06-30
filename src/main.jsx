@@ -12,22 +12,8 @@ export default function AmikoBet() {
       '0911111111': { phone: '0911111111', password: 'demo123', balance: 5000, name: 'Demo User', kyc: true, role: 'user' },
     };
   });
-  
-  const [currentUser, setCurrentUser] = useState(() => {
-    const saved = localStorage.getItem('amikoCurrentUser');
-    return saved ? JSON.parse(saved) : null;
-  });
-  
-  const [agentLoggedIn, setAgentLoggedIn] = useState(() => {
-    const saved = localStorage.getItem('amikoAgentLoggedIn');
-    return saved ? JSON.parse(saved) : null;
-  });
-  
-  const [adminLoggedIn, setAdminLoggedIn] = useState(() => {
-    const saved = localStorage.getItem('amikoAdminLoggedIn');
-    return saved ? JSON.parse(saved) : false;
-  });
-  
+  const [currentUser, setCurrentUser] = useState(null);
+  const [adminLoggedIn, setAdminLoggedIn] = useState(false);
   const [adminPass, setAdminPass] = useState('');
   const [depositAmount, setDepositAmount] = useState('');
   const [withdrawAmount, setWithdrawAmount] = useState('');
@@ -38,128 +24,50 @@ export default function AmikoBet() {
     return saved ? JSON.parse(saved) : [];
   });
   
+  // Agent states
   const [agentPhone, setAgentPhone] = useState('');
   const [agentPassword, setAgentPassword] = useState('');
+  const [agentLoggedIn, setAgentLoggedIn] = useState(null);
   const [pendingDeposits, setPendingDeposits] = useState([]);
   const [agentWithdrawals, setAgentWithdrawals] = useState([]);
-  
-  // ===== AGENTS DATA WITH ONLINE STATUS =====
-  const [agents, setAgents] = useState(() => {
-    const saved = localStorage.getItem('amikoAgents');
-    if (saved) {
-      return JSON.parse(saved);
-    }
-    return {
-      agent1: { 
-        id: 'agent1', 
-        name: 'Abebe', 
-        telebirr: '0912345678', 
-        commission: '5%',
-        phone: '0911000001',
-        password: 'agent123',
-        online: false
-      },
-      agent2: { 
-        id: 'agent2', 
-        name: 'Kebede', 
-        telebirr: '0923456789', 
-        commission: '3%',
-        phone: '0911000002',
-        password: 'agent123',
-        online: false
-      },
-      agent3: { 
-        id: 'agent3', 
-        name: 'Chala', 
-        telebirr: '0934567890', 
-        commission: '4%',
-        phone: '0911000003',
-        password: 'agent123',
-        online: false
-      },
-    };
-  });
 
-  // ===== CLEAR ALL SESSIONS =====
-  const clearAllSessions = () => {
-    localStorage.removeItem('amikoCurrentUser');
-    localStorage.removeItem('amikoAgentLoggedIn');
-    localStorage.removeItem('amikoAdminLoggedIn');
-  };
-
-  // ===== SWITCH ACCOUNT =====
-  const switchAccount = () => {
-    clearAllSessions();
-    setCurrentUser(null);
-    setAgentLoggedIn(null);
-    setAdminLoggedIn(false);
-    setScreen('landing');
-    setMessage('🔄 Logged out. You can now login with a different account.');
-  };
-
-  // ===== AUTO-LOGIN ON PAGE LOAD =====
+  // ===== FIX: Check URL for admin access =====
   useEffect(() => {
     const url = window.location.href;
     if (url.includes('/admin')) {
       setScreen('admin');
-      return;
-    }
-    
-    const savedUser = localStorage.getItem('amikoCurrentUser');
-    if (savedUser) {
-      const user = JSON.parse(savedUser);
-      if (users[user.phone]) {
-        setCurrentUser(user);
-        setScreen('dashboard');
-        return;
-      } else {
-        clearAllSessions();
-      }
-    }
-    
-    const savedAgent = localStorage.getItem('amikoAgentLoggedIn');
-    if (savedAgent) {
-      const agent = JSON.parse(savedAgent);
-      const agentExists = Object.values(agents).some(a => a.phone === agent.phone);
-      if (agentExists) {
-        setAgentLoggedIn(agent);
-        // Set agent online when they login
-        setAgentOnline(agent.id, true);
-        setScreen('agentDashboard');
-        return;
-      } else {
-        clearAllSessions();
-      }
-    }
-    
-    const savedAdmin = localStorage.getItem('amikoAdminLoggedIn');
-    if (savedAdmin === 'true') {
-      setAdminLoggedIn(true);
-      setScreen('admin');
-      return;
     }
   }, []);
 
-  // ===== SET AGENT ONLINE/OFFLINE =====
-  const setAgentOnline = (agentId, status) => {
-    const updatedAgents = { ...agents };
-    if (updatedAgents[agentId]) {
-      updatedAgents[agentId].online = status;
-      setAgents(updatedAgents);
-      localStorage.setItem('amikoAgents', JSON.stringify(updatedAgents));
-    }
+  // Agents data
+  const agents = {
+    agent1: { 
+      id: 'agent1', 
+      name: 'Abebe', 
+      telebirr: '0912345678', 
+      commission: '5%',
+      phone: '0911000001',
+      password: 'agent123'
+    },
+    agent2: { 
+      id: 'agent2', 
+      name: 'Kebede', 
+      telebirr: '0923456789', 
+      commission: '3%',
+      phone: '0911000002',
+      password: 'agent123'
+    },
+    agent3: { 
+      id: 'agent3', 
+      name: 'Chala', 
+      telebirr: '0934567890', 
+      commission: '4%',
+      phone: '0911000003',
+      password: 'agent123'
+    },
   };
 
-  // ===== GET ONLINE AGENTS =====
-  const getOnlineAgents = () => {
-    return Object.values(agents).filter(agent => agent.online === true);
-  };
-
-  // Save agents data
-  useEffect(() => {
-    localStorage.setItem('amikoAgents', JSON.stringify(agents));
-  }, [agents]);
-
+  // Save data
   useEffect(() => {
     localStorage.setItem('amikousers', JSON.stringify(users));
   }, [users]);
@@ -168,6 +76,7 @@ export default function AmikoBet() {
     localStorage.setItem('amikoTransactions', JSON.stringify(transactions));
   }, [transactions]);
 
+  // Check pending deposits and withdrawals for agent
   useEffect(() => {
     if (agentLoggedIn) {
       const pending = transactions.filter(t => 
@@ -215,14 +124,9 @@ export default function AmikoBet() {
       setMessage('Invalid credentials');
       return;
     }
-    
-    clearAllSessions();
     setCurrentUser(user);
-    localStorage.setItem('amikoCurrentUser', JSON.stringify(user));
     setScreen('dashboard');
-    setMessage(`Welcome ${user.name || 'User'}!`);
-    setPhone('');
-    setPassword('');
+    setMessage('');
   };
 
   const handleDeposit = () => {
@@ -231,12 +135,6 @@ export default function AmikoBet() {
       return;
     }
     const amount = Number(depositAmount);
-    
-    // Check if selected agent is online
-    if (!agents[selectedAgent] || !agents[selectedAgent].online) {
-      setMessage('Selected agent is not online. Please choose an online agent.');
-      return;
-    }
     
     const newTransaction = {
       id: Date.now(),
@@ -265,12 +163,6 @@ export default function AmikoBet() {
       return;
     }
     
-    // Check if selected agent is online
-    if (!agents[selectedAgent] || !agents[selectedAgent].online) {
-      setMessage('Selected agent is not online. Please choose an online agent.');
-      return;
-    }
-    
     const newTransaction = {
       id: Date.now(),
       amount: amount,
@@ -291,9 +183,7 @@ export default function AmikoBet() {
 
   const handleAdminLogin = () => {
     if (adminPass === 'admin123') {
-      clearAllSessions();
       setAdminLoggedIn(true);
-      localStorage.setItem('amikoAdminLoggedIn', JSON.stringify(true));
       setMessage('Admin logged in');
     } else {
       setMessage('Invalid admin password');
@@ -340,28 +230,9 @@ export default function AmikoBet() {
       return;
     }
     
-    clearAllSessions();
-    
-    // Set agent online
-    setAgentOnline(agent.id, true);
-    
     setAgentLoggedIn(agent);
-    localStorage.setItem('amikoAgentLoggedIn', JSON.stringify(agent));
     setScreen('agentDashboard');
-    setMessage(`Welcome ${agent.name}! You are now ONLINE.`);
-    setAgentPhone('');
-    setAgentPassword('');
-  };
-
-  const handleAgentLogout = () => {
-    if (agentLoggedIn) {
-      // Set agent offline
-      setAgentOnline(agentLoggedIn.id, false);
-    }
-    clearAllSessions();
-    setAgentLoggedIn(null);
-    setScreen('landing');
-    setMessage('Logged out. You are now OFFLINE.');
+    setMessage(`Welcome ${agent.name}!`);
   };
 
   const handleConfirmDeposit = (transactionId) => {
@@ -408,16 +279,11 @@ export default function AmikoBet() {
   };
 
   const Logout = () => {
-    // Set agent offline if logged in
-    if (agentLoggedIn) {
-      setAgentOnline(agentLoggedIn.id, false);
-    }
-    clearAllSessions();
     setCurrentUser(null);
     setAgentLoggedIn(null);
-    setAdminLoggedIn(false);
     setScreen('landing');
-    setMessage('Logged out successfully!');
+    setAdminLoggedIn(false);
+    setMessage('');
   };
 
   // ==================== STYLES ====================
@@ -519,30 +385,6 @@ export default function AmikoBet() {
       cursor: 'pointer',
       transition: 'all 0.3s'
     },
-    buttonWarning: {
-      padding: '10px 20px',
-      margin: '5px',
-      borderRadius: '10px',
-      border: 'none',
-      background: 'linear-gradient(45deg, #FFA500, #FF8C00)',
-      color: '#fff',
-      fontSize: '14px',
-      fontWeight: 'bold',
-      cursor: 'pointer',
-      transition: 'all 0.3s'
-    },
-    buttonSuccess: {
-      padding: '10px 20px',
-      margin: '5px',
-      borderRadius: '10px',
-      border: 'none',
-      background: 'linear-gradient(45deg, #00FF00, #00CC00)',
-      color: '#fff',
-      fontSize: '14px',
-      fontWeight: 'bold',
-      cursor: 'pointer',
-      transition: 'all 0.3s'
-    },
     message: {
       padding: '10px',
       borderRadius: '10px',
@@ -589,20 +431,11 @@ export default function AmikoBet() {
       color: '#00FF00',
       fontWeight: 'bold'
     },
-    statusOnline: {
-      color: '#00FF00',
-      fontWeight: 'bold'
-    },
-    statusOffline: {
-      color: '#FF0000',
-      fontWeight: 'bold'
-    },
     flex: {
       display: 'flex',
       justifyContent: 'space-between',
       alignItems: 'center',
-      gap: '10px',
-      flexWrap: 'wrap'
+      gap: '10px'
     }
   };
 
@@ -739,15 +572,9 @@ export default function AmikoBet() {
         <div style={styles.cardWide}>
           <div style={styles.flex}>
             <h1 style={styles.title}>👤 Agent Dashboard</h1>
-            <div style={styles.flex}>
-              <span style={styles.statusOnline}>🟢 ONLINE</span>
-              <button style={{...styles.buttonWarning, width: 'auto', padding: '10px 20px'}} onClick={switchAccount}>
-                🔄 Switch Account
-              </button>
-              <button style={{...styles.buttonSecondary, width: 'auto', padding: '10px 20px'}} onClick={handleAgentLogout}>
-                Logout
-              </button>
-            </div>
+            <button style={{...styles.buttonSecondary, width: 'auto', padding: '10px 20px'}} onClick={Logout}>
+              Logout
+            </button>
           </div>
           
           <p style={{textAlign: 'center', opacity: 0.7}}>
@@ -853,8 +680,9 @@ export default function AmikoBet() {
     );
   }
 
-  // ==================== ADMIN PANEL ====================
+  // ==================== ADMIN PANEL (HIDDEN FROM CUSTOMERS) ====================
 
+  // ADMIN ACCESS: Only through URL /admin
   if (screen === 'admin' || adminLoggedIn) {
     if (!adminLoggedIn) {
       return (
@@ -884,22 +712,11 @@ export default function AmikoBet() {
     const pendingDepositsAll = transactions.filter(t => t.type === 'deposit' && t.status === 'pending');
     const totalUsers = Object.keys(users).length;
     const totalTransactions = transactions.length;
-    const onlineAgents = getOnlineAgents();
 
     return (
       <div style={styles.container}>
         <div style={styles.cardWide}>
-          <div style={styles.flex}>
-            <h1 style={styles.title}>👑 Admin Dashboard</h1>
-            <div style={styles.flex}>
-              <button style={{...styles.buttonWarning, width: 'auto', padding: '10px 20px'}} onClick={switchAccount}>
-                🔄 Switch Account
-              </button>
-              <button style={{...styles.buttonSecondary, width: 'auto', padding: '10px 20px'}} onClick={Logout}>
-                Logout
-              </button>
-            </div>
-          </div>
+          <h1 style={styles.title}>👑 Admin Dashboard</h1>
           
           <div style={styles.grid}>
             <div style={styles.gameCard}>
@@ -914,38 +731,7 @@ export default function AmikoBet() {
               <h3>⏳ Pending Withdrawals</h3>
               <p style={{fontSize: '2em'}}>{pendingWithdrawals.length}</p>
             </div>
-            <div style={styles.gameCard}>
-              <h3>🟢 Online Agents</h3>
-              <p style={{fontSize: '2em', color: '#00FF00'}}>{onlineAgents.length}</p>
-            </div>
           </div>
-
-          <h3>🟢 Online Agents</h3>
-          {onlineAgents.length === 0 ? (
-            <p style={{opacity: 0.6}}>No agents online</p>
-          ) : (
-            onlineAgents.map((agent, i) => (
-              <div key={i} style={styles.transactionItem}>
-                <p><strong>{agent.name}</strong> - 📱 {agent.phone}</p>
-                <p>💰 Commission: {agent.commission}</p>
-              </div>
-            ))
-          )}
-
-          <h3>📊 All Agents</h3>
-          {Object.values(agents).map((agent, i) => (
-            <div key={i} style={styles.transactionItem}>
-              <div style={styles.flex}>
-                <div>
-                  <p><strong>{agent.name}</strong> - 📱 {agent.phone}</p>
-                  <p>💰 Commission: {agent.commission}</p>
-                </div>
-                <span style={agent.online ? styles.statusOnline : styles.statusOffline}>
-                  {agent.online ? '🟢 ONLINE' : '🔴 OFFLINE'}
-                </span>
-              </div>
-            </div>
-          ))}
 
           {message && <div style={styles.message}>{message}</div>}
 
@@ -982,8 +768,8 @@ export default function AmikoBet() {
             ))
           )}
 
-          <button style={styles.buttonSecondary} onClick={() => setScreen('landing')}>
-            Back to Home
+          <button style={styles.buttonSecondary} onClick={Logout}>
+            Logout
           </button>
         </div>
       </div>
@@ -996,23 +782,15 @@ export default function AmikoBet() {
     const userTransactions = transactions.filter(t => t.userPhone === currentUser.phone);
     const pendingWithdrawals = userTransactions.filter(t => t.type === 'withdrawal' && t.status === 'pending');
     const pendingDepositsUser = userTransactions.filter(t => t.type === 'deposit' && t.status === 'pending');
-    
-    // Get only online agents
-    const onlineAgents = getOnlineAgents();
 
     return (
       <div style={styles.container}>
         <div style={styles.cardWide}>
           <div style={styles.flex}>
             <h1 style={styles.title}>🎯 AMIKO BET</h1>
-            <div style={styles.flex}>
-              <button style={{...styles.buttonWarning, width: 'auto', padding: '10px 20px'}} onClick={switchAccount}>
-                🔄 Switch Account
-              </button>
-              <button style={{...styles.buttonSecondary, width: 'auto', padding: '10px 20px'}} onClick={Logout}>
-                Logout
-              </button>
-            </div>
+            <button style={{...styles.buttonSecondary, width: 'auto', padding: '10px 20px'}} onClick={Logout}>
+              Logout
+            </button>
           </div>
           
           <div style={{textAlign: 'center', margin: '20px 0'}}>
@@ -1026,73 +804,62 @@ export default function AmikoBet() {
 
           {message && <div style={styles.message}>{message}</div>}
 
-          {/* Show online agents count */}
-          <p style={{textAlign: 'center', color: '#00FF00'}}>
-            🟢 {onlineAgents.length} Agent(s) Online
-          </p>
-
-          {onlineAgents.length === 0 ? (
-            <div style={styles.message} style={{...styles.message, background: 'rgba(255,0,0,0.1)', border: '1px solid rgba(255,0,0,0.2)'}}>
-              ⚠️ No agents are currently online. Please try again later.
+          <div style={styles.grid}>
+            <div style={styles.gameCard}>
+              <h3>💳 Deposit</h3>
+              <input
+                style={styles.input}
+                placeholder="Amount"
+                value={depositAmount}
+                onChange={(e) => setDepositAmount(e.target.value)}
+                type="number"
+              />
+              <select
+                style={styles.input}
+                value={selectedAgent}
+                onChange={(e) => setSelectedAgent(e.target.value)}
+              >
+                {Object.values(agents).map((agent, i) => (
+                  <option key={i} value={agent.id} style={{color: '#000'}}>
+                    {agent.name} - {agent.telebirr} ({agent.commission})
+                  </option>
+                ))}
+              </select>
+              <button style={styles.button} onClick={handleDeposit}>
+                Deposit via Agent
+              </button>
             </div>
-          ) : (
-            <div style={styles.grid}>
-              <div style={styles.gameCard}>
-                <h3>💳 Deposit</h3>
-                <input
-                  style={styles.input}
-                  placeholder="Amount"
-                  value={depositAmount}
-                  onChange={(e) => setDepositAmount(e.target.value)}
-                  type="number"
-                />
-                <select
-                  style={styles.input}
-                  value={selectedAgent}
-                  onChange={(e) => setSelectedAgent(e.target.value)}
-                >
-                  {onlineAgents.map((agent) => (
-                    <option key={agent.id} value={agent.id} style={{color: '#000'}}>
-                      🟢 {agent.name} - {agent.telebirr} ({agent.commission})
-                    </option>
-                  ))}
-                </select>
-                <button style={styles.button} onClick={handleDeposit}>
-                  Deposit via Agent
-                </button>
-              </div>
 
-              <div style={styles.gameCard}>
-                <h3>💸 Withdraw</h3>
-                <input
-                  style={styles.input}
-                  placeholder="Amount"
-                  value={withdrawAmount}
-                  onChange={(e) => setWithdrawAmount(e.target.value)}
-                  type="number"
-                />
-                <select
-                  style={styles.input}
-                  value={selectedAgent}
-                  onChange={(e) => setSelectedAgent(e.target.value)}
-                >
-                  {onlineAgents.map((agent) => (
-                    <option key={agent.id} value={agent.id} style={{color: '#000'}}>
-                      🟢 {agent.name} - {agent.telebirr}
-                    </option>
-                  ))}
-                </select>
-                <button style={styles.button} onClick={handleWithdraw}>
-                  Request Withdrawal
-                </button>
-                {pendingWithdrawals.length > 0 && (
-                  <p style={{fontSize: '12px', color: '#FFA500'}}>
-                    ⏳ {pendingWithdrawals.length} pending withdrawal(s)
-                  </p>
-                )}
-              </div>
+            <div style={styles.gameCard}>
+              <h3>💸 Withdraw</h3>
+              <input
+                style={styles.input}
+                placeholder="Amount"
+                value={withdrawAmount}
+                onChange={(e) => setWithdrawAmount(e.target.value)}
+                type="number"
+              />
+              <select
+                style={styles.input}
+                value={selectedAgent}
+                onChange={(e) => setSelectedAgent(e.target.value)}
+              >
+                {Object.values(agents).map((agent, i) => (
+                  <option key={i} value={agent.id} style={{color: '#000'}}>
+                    {agent.name} - {agent.telebirr}
+                  </option>
+                ))}
+              </select>
+              <button style={styles.button} onClick={handleWithdraw}>
+                Request Withdrawal
+              </button>
+              {pendingWithdrawals.length > 0 && (
+                <p style={{fontSize: '12px', color: '#FFA500'}}>
+                  ⏳ {pendingWithdrawals.length} pending withdrawal(s)
+                </p>
+              )}
             </div>
-          )}
+          </div>
 
           <h3>🎮 Play Games</h3>
           <div style={styles.grid}>
