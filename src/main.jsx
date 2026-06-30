@@ -31,6 +31,14 @@ export default function AmikoBet() {
   const [pendingDeposits, setPendingDeposits] = useState([]);
   const [agentWithdrawals, setAgentWithdrawals] = useState([]);
 
+  // ===== FIX: Check URL for admin access =====
+  useEffect(() => {
+    const url = window.location.href;
+    if (url.includes('/admin')) {
+      setScreen('admin');
+    }
+  }, []);
+
   // Agents data
   const agents = {
     agent1: { 
@@ -674,7 +682,7 @@ export default function AmikoBet() {
 
   // ==================== ADMIN PANEL (HIDDEN FROM CUSTOMERS) ====================
 
-  // ADMIN ACCESS: Only through URL /admin or ?admin=true
+  // ADMIN ACCESS: Only through URL /admin
   if (screen === 'admin' || adminLoggedIn) {
     if (!adminLoggedIn) {
       return (
@@ -888,7 +896,6 @@ export default function AmikoBet() {
             </div>
           ))}
 
-          {/* ONLY Agent Login - Admin Login REMOVED */}
           <button style={styles.buttonSecondary} onClick={() => setScreen('agentLogin')}>
             Agent Login
           </button>
