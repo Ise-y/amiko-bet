@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import ReactDOM from 'react-dom/client';
 import './index.css';
-import './animations.css';   // <-- ANIMATIONS IMPORT ADDED HERE
+import './animations.css';
 
 export default function AmikoBet() {
   const [screen, setScreen] = useState('landing');
@@ -43,6 +43,11 @@ export default function AmikoBet() {
   const [agentPassword, setAgentPassword] = useState('');
   const [pendingDeposits, setPendingDeposits] = useState([]);
   const [agentWithdrawals, setAgentWithdrawals] = useState([]);
+  
+  // ===== NAVIGATION STATES =====
+  const [activeTab, setActiveTab] = useState('sports');
+  const [showDepositModal, setShowDepositModal] = useState(false);
+  const [showWithdrawModal, setShowWithdrawModal] = useState(false);
   
   // ===== AGENTS DATA WITH ONLINE STATUS =====
   const [agents, setAgents] = useState(() => {
@@ -250,6 +255,7 @@ export default function AmikoBet() {
     
     setTransactions([...transactions, newTransaction]);
     setDepositAmount('');
+    setShowDepositModal(false);
     setMessage(`Deposit request of ${amount} ETB sent to ${agents[selectedAgent]?.name}. Send Telebirr to ${agents[selectedAgent]?.telebirr}`);
   };
 
@@ -282,6 +288,7 @@ export default function AmikoBet() {
     
     setTransactions([...transactions, newTransaction]);
     setWithdrawAmount('');
+    setShowWithdrawModal(false);
     setMessage(`Withdrawal request of ${amount} ETB submitted for approval`);
   };
 
@@ -413,267 +420,215 @@ export default function AmikoBet() {
     setMessage('Logged out successfully!');
   };
 
-  // ==================== ENHANCED STYLES ====================
+  // ==================== ZPLAY-STYLE STYLES ====================
 
   const styles = {
     container: {
       minHeight: '100vh',
-      background: 'linear-gradient(135deg, #0a0a1a 0%, #1a0a2e 30%, #0d1b2a 60%, #1b1b3a 100%)',
-      color: '#fff',
+      background: '#0a0e1a',
+      color: '#ffffff',
       fontFamily: '"Segoe UI", Tahoma, Geneva, Verdana, sans-serif',
-      padding: '20px',
-      position: 'relative',
-      overflow: 'hidden'
     },
-    backgroundEffect: {
-      position: 'absolute',
+    // Top Navigation Bar
+    topNav: {
+      background: 'linear-gradient(135deg, #0d1b2a, #1a0a2e)',
+      padding: '10px 20px',
+      display: 'flex',
+      justifyContent: 'space-between',
+      alignItems: 'center',
+      borderBottom: '1px solid rgba(255,255,255,0.05)',
+      flexWrap: 'wrap',
+      gap: '10px'
+    },
+    logo: {
+      fontSize: '1.8em',
+      fontWeight: '900',
+      background: 'linear-gradient(135deg, #00BFFF, #7B2FBE)',
+      WebkitBackgroundClip: 'text',
+      WebkitTextFillColor: 'transparent',
+    },
+    topNavLinks: {
+      display: 'flex',
+      gap: '15px',
+      alignItems: 'center',
+      flexWrap: 'wrap'
+    },
+    navLink: {
+      color: 'rgba(255,255,255,0.7)',
+      textDecoration: 'none',
+      fontSize: '0.9em',
+      padding: '8px 12px',
+      borderRadius: '8px',
+      cursor: 'pointer',
+      transition: 'all 0.3s',
+      background: 'transparent',
+      border: 'none',
+      fontWeight: '600'
+    },
+    navLinkActive: {
+      color: '#00BFFF',
+      background: 'rgba(0,191,255,0.1)',
+    },
+    // Balance Display
+    balanceBar: {
+      background: 'rgba(0,191,255,0.05)',
+      padding: '15px 20px',
+      display: 'flex',
+      justifyContent: 'space-between',
+      alignItems: 'center',
+      borderBottom: '1px solid rgba(255,255,255,0.05)',
+      flexWrap: 'wrap',
+      gap: '10px'
+    },
+    balanceAmount: {
+      fontSize: '2em',
+      fontWeight: 'bold',
+      color: '#00E5FF',
+    },
+    actionButtons: {
+      display: 'flex',
+      gap: '10px'
+    },
+    actionBtn: {
+      padding: '10px 30px',
+      borderRadius: '25px',
+      border: 'none',
+      fontSize: '1em',
+      fontWeight: '700',
+      cursor: 'pointer',
+      transition: 'all 0.3s'
+    },
+    depositBtn: {
+      background: 'linear-gradient(135deg, #00BFFF, #00E5FF)',
+      color: '#fff',
+    },
+    withdrawBtn: {
+      background: 'rgba(255,255,255,0.1)',
+      color: '#fff',
+      border: '1px solid rgba(255,255,255,0.2)',
+    },
+    // Main Content
+    mainContent: {
+      padding: '20px',
+    },
+    // Tab Navigation
+    tabNav: {
+      display: 'flex',
+      gap: '5px',
+      marginBottom: '20px',
+      overflowX: 'auto',
+      padding: '5px 0',
+      borderBottom: '1px solid rgba(255,255,255,0.05)',
+      flexWrap: 'wrap'
+    },
+    tabBtn: {
+      padding: '10px 20px',
+      borderRadius: '8px',
+      border: 'none',
+      background: 'transparent',
+      color: 'rgba(255,255,255,0.6)',
+      fontSize: '0.9em',
+      fontWeight: '600',
+      cursor: 'pointer',
+      transition: 'all 0.3s',
+      whiteSpace: 'nowrap'
+    },
+    tabBtnActive: {
+      color: '#00BFFF',
+      background: 'rgba(0,191,255,0.1)',
+    },
+    // Sports Section
+    sportsGrid: {
+      display: 'grid',
+      gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))',
+      gap: '15px',
+    },
+    matchCard: {
+      background: 'rgba(255,255,255,0.03)',
+      borderRadius: '12px',
+      padding: '15px',
+      border: '1px solid rgba(255,255,255,0.05)',
+    },
+    matchTeams: {
+      display: 'flex',
+      justifyContent: 'space-between',
+      alignItems: 'center',
+      marginBottom: '10px',
+      fontWeight: 'bold',
+    },
+    oddsRow: {
+      display: 'flex',
+      gap: '10px',
+      marginTop: '10px',
+    },
+    oddsBtn: {
+      flex: 1,
+      padding: '8px',
+      borderRadius: '6px',
+      border: 'none',
+      background: 'rgba(255,255,255,0.05)',
+      color: '#fff',
+      cursor: 'pointer',
+      transition: 'all 0.3s',
+      textAlign: 'center'
+    },
+    // Casino Games Grid
+    gamesGrid: {
+      display: 'grid',
+      gridTemplateColumns: 'repeat(auto-fill, minmax(150px, 1fr))',
+      gap: '15px',
+    },
+    gameCard: {
+      background: 'rgba(255,255,255,0.03)',
+      borderRadius: '12px',
+      padding: '20px',
+      textAlign: 'center',
+      border: '1px solid rgba(255,255,255,0.05)',
+      transition: 'all 0.3s',
+      cursor: 'pointer'
+    },
+    gameIcon: {
+      fontSize: '3em',
+      marginBottom: '10px',
+    },
+    gameName: {
+      fontSize: '0.9em',
+      fontWeight: '600',
+    },
+    // Modal
+    modalOverlay: {
+      position: 'fixed',
       top: 0,
       left: 0,
       right: 0,
       bottom: 0,
-      background: 'radial-gradient(circle at 20% 50%, rgba(0,191,255,0.1) 0%, transparent 50%), radial-gradient(circle at 80% 20%, rgba(0,229,255,0.08) 0%, transparent 50%)',
-      pointerEvents: 'none'
-    },
-    card: {
-      background: 'rgba(255,255,255,0.03)',
-      backdropFilter: 'blur(20px)',
-      borderRadius: '30px',
-      padding: '40px 30px',
-      maxWidth: '500px',
-      margin: '0 auto',
-      border: '1px solid rgba(255,255,255,0.08)',
-      boxShadow: '0 25px 50px rgba(0,0,0,0.5), inset 0 1px 0 rgba(255,255,255,0.05)',
-      position: 'relative',
-      zIndex: 1
-    },
-    cardWide: {
-      background: 'rgba(255,255,255,0.03)',
-      backdropFilter: 'blur(20px)',
-      borderRadius: '30px',
-      padding: '40px 30px',
-      maxWidth: '1000px',
-      margin: '0 auto',
-      border: '1px solid rgba(255,255,255,0.08)',
-      boxShadow: '0 25px 50px rgba(0,0,0,0.5), inset 0 1px 0 rgba(255,255,255,0.05)',
-      position: 'relative',
-      zIndex: 1
-    },
-    title: {
-      textAlign: 'center',
-      fontSize: '3em',
-      marginBottom: '5px',
-      background: 'linear-gradient(135deg, #00BFFF 0%, #00E5FF 30%, #7B2FBE 70%, #FF6B6B 100%)',
-      backgroundSize: '300% 300%',
-      WebkitBackgroundClip: 'text',
-      WebkitTextFillColor: 'transparent',
-      animation: 'gradientShift 5s ease infinite',
-      textShadow: '0 0 40px rgba(0,191,255,0.3)',
-      letterSpacing: '2px',
-      fontWeight: '900'
-    },
-    subtitle: {
-      textAlign: 'center',
-      color: 'rgba(255,255,255,0.6)',
-      fontSize: '0.95em',
-      marginTop: '-5px',
-      marginBottom: '25px',
-      letterSpacing: '1px'
-    },
-    input: {
-      width: '100%',
-      padding: '16px 20px',
-      margin: '12px 0',
-      borderRadius: '16px',
-      border: '1px solid rgba(255,255,255,0.08)',
-      background: 'rgba(255,255,255,0.04)',
-      color: '#fff',
-      fontSize: '16px',
-      outline: 'none',
-      transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
-      boxSizing: 'border-box',
-      backdropFilter: 'blur(10px)'
-    },
-    button: {
-      width: '100%',
-      padding: '16px',
-      margin: '12px 0',
-      borderRadius: '16px',
-      border: 'none',
-      background: 'linear-gradient(135deg, #00BFFF, #7B2FBE)',
-      color: '#fff',
-      fontSize: '18px',
-      fontWeight: '700',
-      cursor: 'pointer',
-      transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
-      boxShadow: '0 4px 15px rgba(0,191,255,0.3)',
-      textTransform: 'uppercase',
-      letterSpacing: '1px'
-    },
-    buttonSecondary: {
-      width: '100%',
-      padding: '16px',
-      margin: '12px 0',
-      borderRadius: '16px',
-      border: '1px solid rgba(255,255,255,0.15)',
-      background: 'rgba(255,255,255,0.03)',
-      color: '#fff',
-      fontSize: '16px',
-      fontWeight: '600',
-      cursor: 'pointer',
-      transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
-      backdropFilter: 'blur(10px)'
-    },
-    buttonSmall: {
-      padding: '10px 24px',
-      margin: '5px',
-      borderRadius: '14px',
-      border: 'none',
-      background: 'linear-gradient(135deg, #00BFFF, #7B2FBE)',
-      color: '#fff',
-      fontSize: '14px',
-      fontWeight: '600',
-      cursor: 'pointer',
-      transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
-      boxShadow: '0 4px 15px rgba(0,191,255,0.2)'
-    },
-    buttonDanger: {
-      padding: '10px 24px',
-      margin: '5px',
-      borderRadius: '14px',
-      border: 'none',
-      background: 'linear-gradient(135deg, #FF4444, #FF6B6B)',
-      color: '#fff',
-      fontSize: '14px',
-      fontWeight: '600',
-      cursor: 'pointer',
-      transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
-      boxShadow: '0 4px 15px rgba(255,68,68,0.2)'
-    },
-    buttonWarning: {
-      padding: '10px 24px',
-      margin: '5px',
-      borderRadius: '14px',
-      border: 'none',
-      background: 'linear-gradient(135deg, #FFA500, #FF8C00)',
-      color: '#fff',
-      fontSize: '14px',
-      fontWeight: '600',
-      cursor: 'pointer',
-      transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
-      boxShadow: '0 4px 15px rgba(255,165,0,0.2)'
-    },
-    buttonSuccess: {
-      padding: '10px 24px',
-      margin: '5px',
-      borderRadius: '14px',
-      border: 'none',
-      background: 'linear-gradient(135deg, #00FF00, #00CC00)',
-      color: '#fff',
-      fontSize: '14px',
-      fontWeight: '600',
-      cursor: 'pointer',
-      transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
-      boxShadow: '0 4px 15px rgba(0,255,0,0.2)'
-    },
-    message: {
-      padding: '14px 20px',
-      borderRadius: '16px',
-      margin: '15px 0',
-      textAlign: 'center',
-      background: 'rgba(0,191,255,0.08)',
-      border: '1px solid rgba(0,191,255,0.15)',
-      backdropFilter: 'blur(10px)',
-      color: '#fff',
-      fontWeight: '500'
-    },
-    grid: {
-      display: 'grid',
-      gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))',
-      gap: '20px',
-      margin: '25px 0'
-    },
-    gameCard: {
-      background: 'rgba(255,255,255,0.04)',
-      padding: '25px 20px',
-      borderRadius: '20px',
-      textAlign: 'center',
-      cursor: 'pointer',
-      transition: 'all 0.4s cubic-bezier(0.4, 0, 0.2, 1)',
-      border: '1px solid rgba(255,255,255,0.05)',
-      backdropFilter: 'blur(10px)'
-    },
-    transactionItem: {
-      background: 'rgba(255,255,255,0.03)',
-      padding: '15px 20px',
-      borderRadius: '16px',
-      margin: '10px 0',
-      border: '1px solid rgba(255,255,255,0.05)',
-      transition: 'all 0.3s ease'
-    },
-    statusPending: {
-      color: '#FFA500',
-      fontWeight: 'bold',
-      textShadow: '0 0 20px rgba(255,165,0,0.3)'
-    },
-    statusCompleted: {
-      color: '#00FF00',
-      fontWeight: 'bold',
-      textShadow: '0 0 20px rgba(0,255,0,0.3)'
-    },
-    statusRejected: {
-      color: '#FF4444',
-      fontWeight: 'bold',
-      textShadow: '0 0 20px rgba(255,68,68,0.3)'
-    },
-    statusApproved: {
-      color: '#00FF00',
-      fontWeight: 'bold',
-      textShadow: '0 0 20px rgba(0,255,0,0.3)'
-    },
-    statusOnline: {
-      color: '#00FF00',
-      fontWeight: 'bold',
-      textShadow: '0 0 20px rgba(0,255,0,0.3)'
-    },
-    statusOffline: {
-      color: '#FF4444',
-      fontWeight: 'bold',
-      textShadow: '0 0 20px rgba(255,68,68,0.3)'
-    },
-    flex: {
+      background: 'rgba(0,0,0,0.8)',
       display: 'flex',
-      justifyContent: 'space-between',
+      justifyContent: 'center',
       alignItems: 'center',
-      gap: '10px',
-      flexWrap: 'wrap'
+      zIndex: 1000,
+      backdropFilter: 'blur(5px)'
     },
-    badge: {
-      display: 'inline-block',
-      padding: '4px 12px',
+    modalContent: {
+      background: '#1a1a2e',
       borderRadius: '20px',
-      fontSize: '12px',
-      fontWeight: '600',
-      background: 'linear-gradient(135deg, #00BFFF, #7B2FBE)',
-      color: '#fff',
-      marginLeft: '10px'
+      padding: '30px',
+      maxWidth: '450px',
+      width: '90%',
+      border: '1px solid rgba(255,255,255,0.1)',
     },
-    balanceDisplay: {
-      textAlign: 'center',
-      margin: '25px 0',
-      padding: '20px',
-      background: 'rgba(0,191,255,0.05)',
-      borderRadius: '20px',
-      border: '1px solid rgba(0,191,255,0.1)',
-      position: 'relative',
-      overflow: 'hidden'
+    modalTitle: {
+      fontSize: '1.5em',
+      marginBottom: '20px',
+      textAlign: 'center'
     },
-    balanceAmount: {
-      fontSize: '3.5em',
-      fontWeight: '900',
-      background: 'linear-gradient(135deg, #00BFFF, #00E5FF)',
-      WebkitBackgroundClip: 'text',
-      WebkitTextFillColor: 'transparent',
-      textShadow: '0 0 40px rgba(0,191,255,0.3)'
+    // Footer
+    footer: {
+      background: '#0d0d1a',
+      padding: '30px 20px',
+      marginTop: '30px',
+      borderTop: '1px solid rgba(255,255,255,0.05)',
+      textAlign: 'center'
     }
   };
 
@@ -683,69 +638,76 @@ export default function AmikoBet() {
   if (screen === 'landing' || screen === 'login' || screen === 'register') {
     return (
       <div style={styles.container}>
-        <div style={styles.backgroundEffect}></div>
-        <div style={styles.card}>
-          <h1 style={styles.title} className="floating">🎯 AMIKO BET</h1>
-          <p style={styles.subtitle}>
-            {screen === 'landing' ? '🚀 The Future of Betting in Ethiopia' : 
-             screen === 'login' ? '🔐 Welcome Back!' : '✨ Join the Revolution'}
-          </p>
-          
-          {message && <div style={styles.message}>{message}</div>}
-          
-          <input
-            style={styles.input}
-            placeholder="📱 Phone Number"
-            value={phone}
-            onChange={(e) => setPhone(e.target.value)}
-            type="tel"
-          />
-          <input
-            style={styles.input}
-            placeholder="🔑 Password"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            type="password"
-          />
-          
-          {screen === 'landing' && (
-            <>
-              <button style={styles.button} onClick={() => setScreen('login')}>
-                🚀 Login Now
-              </button>
-              <button style={styles.buttonSecondary} onClick={() => setScreen('register')}>
-                📝 Create Account
-              </button>
-              <button style={styles.buttonSecondary} onClick={() => setScreen('agentLogin')}>
-                👤 Agent Login
-              </button>
-            </>
-          )}
-          
-          {screen === 'login' && (
-            <>
-              <button style={styles.button} onClick={handleLogin}>
-                🔓 Login
-              </button>
-              <button style={styles.buttonSecondary} onClick={() => setScreen('landing')}>
-                ← Back
-              </button>
-            </>
-          )}
-          
-          {screen === 'register' && (
-            <>
-              <button style={styles.button} onClick={handleRegister}>
-                ✨ Register
-              </button>
-              <button style={styles.buttonSecondary} onClick={() => setScreen('landing')}>
-                ← Back
-              </button>
-            </>
-          )}
-          
-          <div style={{textAlign: 'center', marginTop: '20px', opacity: 0.4, fontSize: '0.8em'}}>
-            🔒 100% Secure • Fast Transactions • 24/7 Support
+        <div style={{...styles.topNav, justifyContent: 'center', padding: '30px 20px'}}>
+          <h1 style={styles.logo}>🎯 AMIKO BET</h1>
+        </div>
+        <div style={{maxWidth: '450px', margin: '40px auto', padding: '0 20px'}}>
+          <div style={styles.modalContent}>
+            <h1 style={styles.modalTitle}>
+              {screen === 'landing' ? '🚀 Welcome!' : 
+               screen === 'login' ? '🔐 Login' : '✨ Register'}
+            </h1>
+            <p style={{textAlign: 'center', opacity: 0.6, marginBottom: '20px'}}>
+              {screen === 'landing' ? 'The Future of Betting in Ethiopia' : 
+               screen === 'login' ? 'Welcome back!' : 'Join the revolution'}
+            </p>
+            
+            {message && <div style={{...styles.message, ...{padding: '10px', borderRadius: '10px', margin: '10px 0', textAlign: 'center', background: 'rgba(0,191,255,0.1)', border: '1px solid rgba(0,191,255,0.2)'}}}>{message}</div>}
+            
+            <input
+              style={{...styles.input, ...{width: '100%', padding: '14px', margin: '10px 0', borderRadius: '12px', border: '1px solid rgba(255,255,255,0.1)', background: 'rgba(255,255,255,0.05)', color: '#fff', fontSize: '16px'}}}
+              placeholder="📱 Phone Number"
+              value={phone}
+              onChange={(e) => setPhone(e.target.value)}
+              type="tel"
+            />
+            <input
+              style={{...styles.input, ...{width: '100%', padding: '14px', margin: '10px 0', borderRadius: '12px', border: '1px solid rgba(255,255,255,0.1)', background: 'rgba(255,255,255,0.05)', color: '#fff', fontSize: '16px'}}}
+              placeholder="🔑 Password"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              type="password"
+            />
+            
+            {screen === 'landing' && (
+              <>
+                <button style={{...styles.actionBtn, ...styles.depositBtn, width: '100%'}} onClick={() => setScreen('login')}>
+                  🚀 Login Now
+                </button>
+                <button style={{...styles.actionBtn, ...styles.withdrawBtn, width: '100%', marginTop: '10px'}} onClick={() => setScreen('register')}>
+                  📝 Create Account
+                </button>
+                <button style={{...styles.actionBtn, ...styles.withdrawBtn, width: '100%', marginTop: '10px'}} onClick={() => setScreen('agentLogin')}>
+                  👤 Agent Login
+                </button>
+              </>
+            )}
+            
+            {screen === 'login' && (
+              <>
+                <button style={{...styles.actionBtn, ...styles.depositBtn, width: '100%'}} onClick={handleLogin}>
+                  🔓 Login
+                </button>
+                <button style={{...styles.actionBtn, ...styles.withdrawBtn, width: '100%', marginTop: '10px'}} onClick={() => setScreen('landing')}>
+                  ← Back
+                </button>
+              </>
+            )}
+            
+            {screen === 'register' && (
+              <>
+                <button style={{...styles.actionBtn, ...styles.depositBtn, width: '100%'}} onClick={handleRegister}>
+                  ✨ Register
+                </button>
+                <button style={{...styles.actionBtn, ...styles.withdrawBtn, width: '100%', marginTop: '10px'}} onClick={() => setScreen('landing')}>
+                  ← Back
+                </button>
+              </>
+            )}
+            
+            <div style={{textAlign: 'center', marginTop: '20px', opacity: 0.4, fontSize: '0.8em'}}>
+              🔒 100% Secure • Fast Transactions • 24/7 Support
+            </div>
           </div>
         </div>
       </div>
@@ -757,42 +719,46 @@ export default function AmikoBet() {
   if (screen === 'agentLogin') {
     return (
       <div style={styles.container}>
-        <div style={styles.backgroundEffect}></div>
-        <div style={styles.card}>
-          <h1 style={styles.title} className="floating">👤 Agent Login</h1>
-          <p style={styles.subtitle}>
-            Login to manage deposits and withdrawals
-          </p>
-          
-          {message && <div style={styles.message}>{message}</div>}
-          
-          <input
-            style={styles.input}
-            placeholder="📱 Agent Phone Number"
-            value={agentPhone}
-            onChange={(e) => setAgentPhone(e.target.value)}
-            type="tel"
-          />
-          <input
-            style={styles.input}
-            placeholder="🔑 Agent Password"
-            value={agentPassword}
-            onChange={(e) => setAgentPassword(e.target.value)}
-            type="password"
-          />
-          
-          <button style={styles.button} onClick={handleAgentLogin}>
-            🔓 Login as Agent
-          </button>
-          <button style={styles.buttonSecondary} onClick={() => setScreen('landing')}>
-            ← Back
-          </button>
-          
-          <div style={{marginTop: '20px', padding: '10px', background: 'rgba(255,255,255,0.05)', borderRadius: '10px'}}>
-            <p style={{fontSize: '12px', opacity: 0.6}}>Demo Agents:</p>
-            <p style={{fontSize: '12px', opacity: 0.6}}>Agent 1: 0911000001 / agent123</p>
-            <p style={{fontSize: '12px', opacity: 0.6}}>Agent 2: 0911000002 / agent123</p>
-            <p style={{fontSize: '12px', opacity: 0.6}}>Agent 3: 0911000003 / agent123</p>
+        <div style={{...styles.topNav, justifyContent: 'center', padding: '30px 20px'}}>
+          <h1 style={styles.logo}>👤 Agent Login</h1>
+        </div>
+        <div style={{maxWidth: '450px', margin: '40px auto', padding: '0 20px'}}>
+          <div style={styles.modalContent}>
+            <h1 style={styles.modalTitle}>🔐 Agent Login</h1>
+            <p style={{textAlign: 'center', opacity: 0.6, marginBottom: '20px'}}>
+              Login to manage deposits and withdrawals
+            </p>
+            
+            {message && <div style={{...styles.message, ...{padding: '10px', borderRadius: '10px', margin: '10px 0', textAlign: 'center', background: 'rgba(0,191,255,0.1)', border: '1px solid rgba(0,191,255,0.2)'}}}>{message}</div>}
+            
+            <input
+              style={{...styles.input, ...{width: '100%', padding: '14px', margin: '10px 0', borderRadius: '12px', border: '1px solid rgba(255,255,255,0.1)', background: 'rgba(255,255,255,0.05)', color: '#fff', fontSize: '16px'}}}
+              placeholder="📱 Agent Phone Number"
+              value={agentPhone}
+              onChange={(e) => setAgentPhone(e.target.value)}
+              type="tel"
+            />
+            <input
+              style={{...styles.input, ...{width: '100%', padding: '14px', margin: '10px 0', borderRadius: '12px', border: '1px solid rgba(255,255,255,0.1)', background: 'rgba(255,255,255,0.05)', color: '#fff', fontSize: '16px'}}}
+              placeholder="🔑 Agent Password"
+              value={agentPassword}
+              onChange={(e) => setAgentPassword(e.target.value)}
+              type="password"
+            />
+            
+            <button style={{...styles.actionBtn, ...styles.depositBtn, width: '100%'}} onClick={handleAgentLogin}>
+              🔓 Login as Agent
+            </button>
+            <button style={{...styles.actionBtn, ...styles.withdrawBtn, width: '100%', marginTop: '10px'}} onClick={() => setScreen('landing')}>
+              ← Back
+            </button>
+            
+            <div style={{marginTop: '20px', padding: '10px', background: 'rgba(255,255,255,0.05)', borderRadius: '10px'}}>
+              <p style={{fontSize: '12px', opacity: 0.6}}>Demo Agents:</p>
+              <p style={{fontSize: '12px', opacity: 0.6}}>Agent 1: 0911000001 / agent123</p>
+              <p style={{fontSize: '12px', opacity: 0.6}}>Agent 2: 0911000002 / agent123</p>
+              <p style={{fontSize: '12px', opacity: 0.6}}>Agent 3: 0911000003 / agent123</p>
+            </div>
           </div>
         </div>
       </div>
@@ -813,27 +779,29 @@ export default function AmikoBet() {
 
     return (
       <div style={styles.container}>
-        <div style={styles.backgroundEffect}></div>
-        <div style={styles.cardWide}>
-          <div style={styles.flex}>
-            <div>
-              <h1 style={styles.title} className="floating">👤 Agent Dashboard</h1>
-              <p style={styles.subtitle}>Welcome, {agentLoggedIn.name}! 📱 {agentLoggedIn.telebirr}</p>
-            </div>
-            <div style={styles.flex}>
-              <span style={styles.statusOnline}>🟢 ONLINE</span>
-              <button style={{...styles.buttonWarning, width: 'auto', padding: '10px 20px'}} onClick={switchAccount}>
-                🔄 Switch
-              </button>
-              <button style={{...styles.buttonSecondary, width: 'auto', padding: '10px 20px'}} onClick={handleAgentLogout}>
-                Logout
-              </button>
-            </div>
+        <div style={styles.topNav}>
+          <span style={styles.logo}>👤 Agent Panel</span>
+          <div style={styles.topNavLinks}>
+            <span style={{color: '#00FF00', fontSize: '0.9em'}}>🟢 ONLINE</span>
+            <button style={{...styles.navLink, ...{background: 'rgba(255,165,0,0.2)', color: '#FFA500'}}} onClick={switchAccount}>🔄 Switch</button>
+            <button style={{...styles.navLink, ...{color: '#FF4444'}}} onClick={handleAgentLogout}>Logout</button>
           </div>
+        </div>
 
-          {message && <div style={styles.message}>{message}</div>}
+        <div style={styles.balanceBar}>
+          <div>
+            <p style={{opacity: 0.6, fontSize: '0.9em'}}>Welcome, {agentLoggedIn.name}</p>
+            <p style={{fontSize: '0.8em', opacity: 0.5}}>📱 {agentLoggedIn.telebirr}</p>
+          </div>
+          <div style={styles.actionButtons}>
+            <span style={{...styles.balanceAmount, fontSize: '1.2em'}}>💰 {totalCommission.toFixed(2)} ETB Commission</span>
+          </div>
+        </div>
 
-          <div style={styles.grid}>
+        {message && <div style={{...styles.message, ...{padding: '10px', borderRadius: '10px', margin: '10px 20px', textAlign: 'center', background: 'rgba(0,191,255,0.1)', border: '1px solid rgba(0,191,255,0.2)'}}}>{message}</div>}
+
+        <div style={styles.mainContent}>
+          <div style={{display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '15px', marginBottom: '20px'}}>
             <div style={styles.gameCard}>
               <h4>💰 Pending Deposits</h4>
               <p style={{fontSize: '2em', color: '#FFA500'}}>{pendingDeposits.length}</p>
@@ -856,7 +824,7 @@ export default function AmikoBet() {
             <p style={{opacity: 0.6}}>No pending deposits</p>
           ) : (
             pendingDeposits.map((t, i) => (
-              <div key={i} style={styles.transactionItem}>
+              <div key={i} style={styles.matchCard}>
                 <div style={styles.flex}>
                   <div>
                     <p><strong>Customer:</strong> {t.userPhone}</p>
@@ -864,10 +832,10 @@ export default function AmikoBet() {
                     <p><strong>Date:</strong> {new Date(t.date).toLocaleDateString()}</p>
                   </div>
                   <div>
-                    <button style={styles.buttonSmall} onClick={() => handleConfirmDeposit(t.id)}>
+                    <button style={{...styles.actionBtn, ...styles.depositBtn, padding: '8px 20px', fontSize: '0.8em'}} onClick={() => handleConfirmDeposit(t.id)}>
                       ✅ Confirm
                     </button>
-                    <button style={styles.buttonDanger} onClick={() => handleRejectDeposit(t.id)}>
+                    <button style={{...styles.actionBtn, ...styles.withdrawBtn, padding: '8px 20px', fontSize: '0.8em', marginTop: '5px'}} onClick={() => handleRejectDeposit(t.id)}>
                       ❌ Reject
                     </button>
                   </div>
@@ -881,7 +849,7 @@ export default function AmikoBet() {
             <p style={{opacity: 0.6}}>No pending withdrawals</p>
           ) : (
             agentWithdrawals.map((t, i) => (
-              <div key={i} style={styles.transactionItem}>
+              <div key={i} style={styles.matchCard}>
                 <div style={styles.flex}>
                   <div>
                     <p><strong>Customer:</strong> {t.userPhone}</p>
@@ -889,10 +857,10 @@ export default function AmikoBet() {
                     <p><strong>Date:</strong> {new Date(t.date).toLocaleDateString()}</p>
                   </div>
                   <div>
-                    <button style={styles.buttonSmall} onClick={() => handleProcessWithdrawal(t.id)}>
+                    <button style={{...styles.actionBtn, ...styles.depositBtn, padding: '8px 20px', fontSize: '0.8em'}} onClick={() => handleProcessWithdrawal(t.id)}>
                       💸 Process
                     </button>
-                    <button style={styles.buttonDanger} onClick={() => handleRejectWithdrawal(t.id)}>
+                    <button style={{...styles.actionBtn, ...styles.withdrawBtn, padding: '8px 20px', fontSize: '0.8em', marginTop: '5px'}} onClick={() => handleRejectWithdrawal(t.id)}>
                       ❌ Reject
                     </button>
                   </div>
@@ -900,31 +868,6 @@ export default function AmikoBet() {
               </div>
             ))
           )}
-
-          <h3>📋 Recent Transactions</h3>
-          {transactions.filter(t => t.agentId === agentLoggedIn.id).slice(-5).reverse().map((t, i) => (
-            <div key={i} style={styles.transactionItem}>
-              <div style={styles.flex}>
-                <div>
-                  <p>{t.type === 'deposit' ? '💰 Deposit' : '💸 Withdrawal'}</p>
-                  <p>{t.amount} ETB</p>
-                </div>
-                <div>
-                  <span style={
-                    t.status === 'pending' ? styles.statusPending :
-                    t.status === 'completed' || t.status === 'approved' ? styles.statusCompleted :
-                    styles.statusRejected
-                  }>
-                    {t.status.toUpperCase()}
-                  </span>
-                </div>
-              </div>
-            </div>
-          ))}
-
-          <button style={styles.buttonSecondary} onClick={() => setScreen('landing')}>
-            Back to Home
-          </button>
         </div>
       </div>
     );
@@ -936,23 +879,27 @@ export default function AmikoBet() {
     if (!adminLoggedIn) {
       return (
         <div style={styles.container}>
-          <div style={styles.backgroundEffect}></div>
-          <div style={styles.card}>
-            <h1 style={styles.title} className="floating">🔐 Admin Login</h1>
-            {message && <div style={styles.message}>{message}</div>}
-            <input
-              style={styles.input}
-              placeholder="Admin Password"
-              value={adminPass}
-              onChange={(e) => setAdminPass(e.target.value)}
-              type="password"
-            />
-            <button style={styles.button} onClick={handleAdminLogin}>
-              Login as Admin
-            </button>
-            <button style={styles.buttonSecondary} onClick={() => setScreen('landing')}>
-              Back
-            </button>
+          <div style={{...styles.topNav, justifyContent: 'center', padding: '30px 20px'}}>
+            <h1 style={styles.logo}>🔐 Admin Login</h1>
+          </div>
+          <div style={{maxWidth: '450px', margin: '40px auto', padding: '0 20px'}}>
+            <div style={styles.modalContent}>
+              <h1 style={styles.modalTitle}>Admin Access</h1>
+              {message && <div style={{...styles.message, ...{padding: '10px', borderRadius: '10px', margin: '10px 0', textAlign: 'center', background: 'rgba(0,191,255,0.1)', border: '1px solid rgba(0,191,255,0.2)'}}}>{message}</div>}
+              <input
+                style={{...styles.input, ...{width: '100%', padding: '14px', margin: '10px 0', borderRadius: '12px', border: '1px solid rgba(255,255,255,0.1)', background: 'rgba(255,255,255,0.05)', color: '#fff', fontSize: '16px'}}}
+                placeholder="Admin Password"
+                value={adminPass}
+                onChange={(e) => setAdminPass(e.target.value)}
+                type="password"
+              />
+              <button style={{...styles.actionBtn, ...styles.depositBtn, width: '100%'}} onClick={handleAdminLogin}>
+                Login as Admin
+              </button>
+              <button style={{...styles.actionBtn, ...styles.withdrawBtn, width: '100%', marginTop: '10px'}} onClick={() => setScreen('landing')}>
+                Back
+              </button>
+            </div>
           </div>
         </div>
       );
@@ -961,26 +908,22 @@ export default function AmikoBet() {
     const pendingWithdrawals = transactions.filter(t => t.type === 'withdrawal' && t.status === 'pending');
     const pendingDepositsAll = transactions.filter(t => t.type === 'deposit' && t.status === 'pending');
     const totalUsers = Object.keys(users).length;
-    const totalTransactions = transactions.length;
     const onlineAgents = getOnlineAgents();
 
     return (
       <div style={styles.container}>
-        <div style={styles.backgroundEffect}></div>
-        <div style={styles.cardWide}>
-          <div style={styles.flex}>
-            <h1 style={styles.title} className="floating">👑 Admin Dashboard</h1>
-            <div style={styles.flex}>
-              <button style={{...styles.buttonWarning, width: 'auto', padding: '10px 20px'}} onClick={switchAccount}>
-                🔄 Switch
-              </button>
-              <button style={{...styles.buttonSecondary, width: 'auto', padding: '10px 20px'}} onClick={Logout}>
-                Logout
-              </button>
-            </div>
+        <div style={styles.topNav}>
+          <span style={styles.logo}>👑 Admin Dashboard</span>
+          <div style={styles.topNavLinks}>
+            <button style={{...styles.navLink, ...{background: 'rgba(255,165,0,0.2)', color: '#FFA500'}}} onClick={switchAccount}>🔄 Switch</button>
+            <button style={{...styles.navLink, ...{color: '#FF4444'}}} onClick={Logout}>Logout</button>
           </div>
-          
-          <div style={styles.grid}>
+        </div>
+
+        {message && <div style={{...styles.message, ...{padding: '10px', borderRadius: '10px', margin: '10px 20px', textAlign: 'center', background: 'rgba(0,191,255,0.1)', border: '1px solid rgba(0,191,255,0.2)'}}}>{message}</div>}
+
+        <div style={styles.mainContent}>
+          <div style={{display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '15px', marginBottom: '20px'}}>
             <div style={styles.gameCard}>
               <h3>👤 Users</h3>
               <p style={{fontSize: '2em'}}>{totalUsers}</p>
@@ -1004,7 +947,7 @@ export default function AmikoBet() {
             <p style={{opacity: 0.6}}>No agents online</p>
           ) : (
             onlineAgents.map((agent, i) => (
-              <div key={i} style={styles.transactionItem}>
+              <div key={i} style={styles.matchCard}>
                 <p><strong>{agent.name}</strong> - 📱 {agent.phone}</p>
                 <p>💰 Commission: {agent.commission}</p>
               </div>
@@ -1013,24 +956,22 @@ export default function AmikoBet() {
 
           <h3>📊 All Agents</h3>
           {Object.values(agents).map((agent, i) => (
-            <div key={i} style={styles.transactionItem}>
+            <div key={i} style={styles.matchCard}>
               <div style={styles.flex}>
                 <div>
                   <p><strong>{agent.name}</strong> - 📱 {agent.phone}</p>
                   <p>💰 Commission: {agent.commission}</p>
                 </div>
-                <span style={agent.online ? styles.statusOnline : styles.statusOffline}>
+                <span style={agent.online ? {color: '#00FF00', fontWeight: 'bold'} : {color: '#FF4444', fontWeight: 'bold'}}>
                   {agent.online ? '🟢 ONLINE' : '🔴 OFFLINE'}
                 </span>
               </div>
             </div>
           ))}
 
-          {message && <div style={styles.message}>{message}</div>}
-
           <h3>📊 All Users</h3>
           {Object.values(users).map((user, i) => (
-            <div key={i} style={styles.transactionItem}>
+            <div key={i} style={styles.matchCard}>
               <p><strong>{user.name}</strong> - 📱 {user.phone}</p>
               <p>💰 Balance: {user.balance} ETB</p>
             </div>
@@ -1041,7 +982,7 @@ export default function AmikoBet() {
             <p>No pending withdrawals</p>
           ) : (
             pendingWithdrawals.map((t, i) => (
-              <div key={i} style={styles.transactionItem}>
+              <div key={i} style={styles.matchCard}>
                 <div style={styles.flex}>
                   <div>
                     <p><strong>Customer:</strong> {t.userPhone}</p>
@@ -1049,10 +990,10 @@ export default function AmikoBet() {
                     <p><strong>Agent:</strong> {t.agentName || 'Unknown'}</p>
                   </div>
                   <div>
-                    <button style={styles.buttonSmall} onClick={() => handleApproveWithdrawal(t.id)}>
+                    <button style={{...styles.actionBtn, ...styles.depositBtn, padding: '8px 20px', fontSize: '0.8em'}} onClick={() => handleApproveWithdrawal(t.id)}>
                       ✅ Approve
                     </button>
-                    <button style={styles.buttonDanger} onClick={() => handleRejectWithdrawal(t.id)}>
+                    <button style={{...styles.actionBtn, ...styles.withdrawBtn, padding: '8px 20px', fontSize: '0.8em', marginTop: '5px'}} onClick={() => handleRejectWithdrawal(t.id)}>
                       ❌ Reject
                     </button>
                   </div>
@@ -1060,16 +1001,12 @@ export default function AmikoBet() {
               </div>
             ))
           )}
-
-          <button style={styles.buttonSecondary} onClick={() => setScreen('landing')}>
-            Back to Home
-          </button>
         </div>
       </div>
     );
   }
 
-  // ==================== USER DASHBOARD (ENHANCED UI) ====================
+  // ==================== USER DASHBOARD (ZPLAY-STYLE) ====================
 
   if (screen === 'dashboard' && currentUser) {
     const userTransactions = transactions.filter(t => t.userPhone === currentUser.phone);
@@ -1077,148 +1014,208 @@ export default function AmikoBet() {
     const pendingDepositsUser = userTransactions.filter(t => t.type === 'deposit' && t.status === 'pending');
     const onlineAgents = getOnlineAgents();
 
+    // Sports matches data
+    const matches = [
+      { home: 'Ivory Coast', away: 'Norway', odds: { home: 3.6, draw: 3.5, away: 2.15 } },
+      { home: 'France', away: 'Sweden', odds: { home: 1.3, draw: 6.1, away: 9.8 } },
+      { home: 'Mexico', away: 'Ecuador', odds: { home: 2.3, draw: 2.9, away: 4 } },
+      { home: 'England', away: 'Germany', odds: { home: 19.0, draw: 5.55, away: 13 } },
+    ];
+
+    // Casino games
+    const casinoGames = [
+      { icon: '🎰', name: 'Slots' },
+      { icon: '🎲', name: 'Live Casino' },
+      { icon: '📺', name: 'TV Games' },
+      { icon: '🏏', name: 'Virtual Sport' },
+    ];
+
+    // Crash games
+    const crashGames = [
+      { icon: '🚀', name: 'ZPLAY JETX' },
+      { icon: '💥', name: 'Crash' },
+      { icon: '🎯', name: 'Keno' },
+      { icon: '🃏', name: 'HiLo' },
+    ];
+
     return (
       <div style={styles.container}>
-        <div style={styles.backgroundEffect}></div>
-        <div style={styles.cardWide}>
-          <div style={styles.flex}>
-            <div>
-              <h1 style={styles.title} className="floating">🎯 AMIKO BET</h1>
-              <p style={styles.subtitle}>⚡ The Future of Betting in Ethiopia</p>
-            </div>
-            <div style={styles.flex}>
-              <span style={{...styles.badge, background: 'linear-gradient(135deg, #00FF00, #00CC00)'}}>
-                🟢 LIVE
-              </span>
-              <button style={{...styles.buttonWarning, width: 'auto', padding: '10px 20px'}} onClick={switchAccount}>
-                🔄 Switch
-              </button>
-              <button style={{...styles.buttonSecondary, width: 'auto', padding: '10px 20px'}} onClick={Logout}>
-                Logout
-              </button>
-            </div>
+        {/* Top Navigation */}
+        <div style={styles.topNav}>
+          <span style={styles.logo}>🎯 AMIKO BET</span>
+          <div style={styles.topNavLinks}>
+            <span style={{color: '#00FF00', fontSize: '0.8em'}}>🟢 LIVE</span>
+            <button style={{...styles.navLink, ...{background: 'rgba(255,165,0,0.2)', color: '#FFA500'}}} onClick={switchAccount}>🔄 Switch</button>
+            <button style={{...styles.navLink, ...{color: '#FF4444'}}} onClick={Logout}>Logout</button>
           </div>
-          
-          <div style={styles.balanceDisplay}>
-            <p style={{opacity: 0.7, fontSize: '0.9em'}}>👤 {currentUser.name || 'User'}</p>
-            <p style={{opacity: 0.5, fontSize: '0.8em'}}>📱 {currentUser.phone}</p>
-            <h2 style={styles.balanceAmount}>💰 {currentUser.balance} ETB</h2>
-            {pendingDepositsUser.length > 0 && (
-              <p style={{color: '#FFA500'}} className="pulsing">
-                ⏳ {pendingDepositsUser.length} deposit(s) pending approval
-              </p>
-            )}
+        </div>
+
+        {/* Balance Bar */}
+        <div style={styles.balanceBar}>
+          <div>
+            <p style={{opacity: 0.6, fontSize: '0.9em'}}>👤 {currentUser.name || 'User'}</p>
+            <p style={{fontSize: '0.8em', opacity: 0.5}}>📱 {currentUser.phone}</p>
           </div>
-
-          {message && <div style={styles.message}>{message}</div>}
-
-          <div style={{textAlign: 'center', margin: '15px 0'}}>
-            <span style={styles.statusOnline}>
-              🟢 {onlineAgents.length} Agent(s) Online
-            </span>
+          <div style={styles.actionButtons}>
+            <span style={styles.balanceAmount}>💰 {currentUser.balance} ETB</span>
+            <button style={{...styles.actionBtn, ...styles.depositBtn}} onClick={() => setShowDepositModal(true)}>
+              💳 Deposit
+            </button>
+            <button style={{...styles.actionBtn, ...styles.withdrawBtn}} onClick={() => setShowWithdrawModal(true)}>
+              💸 Withdraw
+            </button>
           </div>
+        </div>
 
-          {onlineAgents.length === 0 ? (
-            <div style={{...styles.message, background: 'rgba(255,0,0,0.08)', border: '1px solid rgba(255,0,0,0.15)'}}>
-              ⚠️ No agents are currently online. Please try again later.
-            </div>
-          ) : (
-            <div style={styles.grid}>
-              <div style={styles.gameCard} className="floating">
-                <h3 style={{fontSize: '1.5em', marginBottom: '15px'}}>💳 Deposit</h3>
-                <p style={{opacity: 0.6, fontSize: '0.8em', marginBottom: '10px'}}>
-                  Fast & Secure
-                </p>
-                <input
-                  style={styles.input}
-                  placeholder="Amount (ETB)"
-                  value={depositAmount}
-                  onChange={(e) => setDepositAmount(e.target.value)}
-                  type="number"
-                />
-                <select
-                  style={styles.input}
-                  value={selectedAgent}
-                  onChange={(e) => setSelectedAgent(e.target.value)}
-                >
-                  {onlineAgents.map((agent) => (
-                    <option key={agent.id} value={agent.id} style={{color: '#000'}}>
-                      🟢 {agent.name} - {agent.telebirr} ({agent.commission})
-                    </option>
-                  ))}
-                </select>
-                <button style={styles.button} onClick={handleDeposit}>
-                  Deposit Now
-                </button>
-                <p style={{fontSize: '11px', opacity: 0.5, marginTop: '10px'}}>
-                  🔒 Secured by Telebirr
-                </p>
+        {message && <div style={{...styles.message, ...{padding: '10px', borderRadius: '10px', margin: '10px 20px', textAlign: 'center', background: 'rgba(0,191,255,0.1)', border: '1px solid rgba(0,191,255,0.2)'}}}>{message}</div>}
+
+        {/* Tab Navigation */}
+        <div style={{...styles.tabNav, padding: '0 20px'}}>
+          {['Sports', 'Live Casino', 'Games', 'Crash', 'Virtual Sport'].map((tab) => (
+            <button
+              key={tab}
+              style={{...styles.tabBtn, ...(activeTab === tab.toLowerCase() ? styles.tabBtnActive : {})}}
+              onClick={() => setActiveTab(tab.toLowerCase())}
+            >
+              {tab}
+            </button>
+          ))}
+        </div>
+
+        {/* Main Content */}
+        <div style={{...styles.mainContent, padding: '0 20px 20px'}}>
+          {/* Sports Tab */}
+          {activeTab === 'sports' && (
+            <>
+              <h2 style={{marginBottom: '15px'}}>⚽ Football</h2>
+              <p style={{opacity: 0.5, marginBottom: '20px'}}>World Cup 2026</p>
+              <div style={styles.sportsGrid}>
+                {matches.map((match, i) => (
+                  <div key={i} style={styles.matchCard}>
+                    <div style={styles.matchTeams}>
+                      <span>{match.home}</span>
+                      <span style={{opacity: 0.3}}>VS</span>
+                      <span>{match.away}</span>
+                    </div>
+                    <div style={styles.oddsRow}>
+                      <button style={styles.oddsBtn}>
+                        <div>W1</div>
+                        <div style={{color: '#00E5FF'}}>{match.odds.home}</div>
+                      </button>
+                      <button style={styles.oddsBtn}>
+                        <div>X</div>
+                        <div style={{color: '#00E5FF'}}>{match.odds.draw}</div>
+                      </button>
+                      <button style={styles.oddsBtn}>
+                        <div>W2</div>
+                        <div style={{color: '#00E5FF'}}>{match.odds.away}</div>
+                      </button>
+                    </div>
+                  </div>
+                ))}
               </div>
-
-              <div style={styles.gameCard} className="floating">
-                <h3 style={{fontSize: '1.5em', marginBottom: '15px'}}>💸 Withdraw</h3>
-                <p style={{opacity: 0.6, fontSize: '0.8em', marginBottom: '10px'}}>
-                  Instant Processing
-                </p>
-                <input
-                  style={styles.input}
-                  placeholder="Amount (ETB)"
-                  value={withdrawAmount}
-                  onChange={(e) => setWithdrawAmount(e.target.value)}
-                  type="number"
-                />
-                <select
-                  style={styles.input}
-                  value={selectedAgent}
-                  onChange={(e) => setSelectedAgent(e.target.value)}
-                >
-                  {onlineAgents.map((agent) => (
-                    <option key={agent.id} value={agent.id} style={{color: '#000'}}>
-                      🟢 {agent.name} - {agent.telebirr}
-                    </option>
-                  ))}
-                </select>
-                <button style={styles.button} onClick={handleWithdraw}>
-                  Request Withdrawal
-                </button>
-                {pendingWithdrawals.length > 0 && (
-                  <p style={{fontSize: '12px', color: '#FFA500'}} className="pulsing">
-                    ⏳ {pendingWithdrawals.length} pending withdrawal(s)
-                  </p>
-                )}
-              </div>
-            </div>
+            </>
           )}
 
-          <h2 style={{textAlign: 'center', marginTop: '30px', fontSize: '1.8em'}}>
-            🎮 Popular Games
-          </h2>
-          <p style={{textAlign: 'center', opacity: 0.5, marginBottom: '20px'}}>
-            Play and Win Big!
-          </p>
-          <div style={styles.grid}>
-            {[
-              { icon: '✈️', name: 'Aviator', desc: 'Crash Game', color: '#00BFFF' },
-              { icon: '🚀', name: 'JetX', desc: 'Space Adventure', color: '#7B2FBE' },
-              { icon: '⚽', name: 'Football', desc: 'Sports Betting', color: '#00FF00' },
-              { icon: '🎰', name: 'Slots', desc: 'Jackpot Games', color: '#FF6B6B' }
-            ].map((game, index) => (
-              <div key={index} style={{...styles.gameCard, borderColor: game.color}}>
-                <div style={{fontSize: '3em'}}>{game.icon}</div>
-                <h4>{game.name}</h4>
-                <p style={{opacity: 0.5, fontSize: '0.8em'}}>{game.desc}</p>
-                <button style={{...styles.buttonSmall, background: `linear-gradient(135deg, ${game.color}, ${game.color}dd)`}}>
-                  Play Now 🎯
-                </button>
+          {/* Live Casino Tab */}
+          {activeTab === 'live casino' && (
+            <>
+              <h2 style={{marginBottom: '15px'}}>🎲 Live Casino</h2>
+              <p style={{opacity: 0.5, marginBottom: '20px'}}>Play with real dealers</p>
+              <div style={styles.gamesGrid}>
+                {casinoGames.map((game, i) => (
+                  <div key={i} style={styles.gameCard}>
+                    <div style={styles.gameIcon}>{game.icon}</div>
+                    <div style={styles.gameName}>{game.name}</div>
+                    <button style={{...styles.actionBtn, ...styles.depositBtn, padding: '8px 20px', fontSize: '0.8em', marginTop: '10px'}}>
+                      Play Now
+                    </button>
+                  </div>
+                ))}
               </div>
-            ))}
+            </>
+          )}
+
+          {/* Games Tab */}
+          {activeTab === 'games' && (
+            <>
+              <h2 style={{marginBottom: '15px'}}>🎮 Games</h2>
+              <p style={{opacity: 0.5, marginBottom: '20px'}}>Popular casino games</p>
+              <div style={styles.gamesGrid}>
+                {casinoGames.map((game, i) => (
+                  <div key={i} style={styles.gameCard}>
+                    <div style={styles.gameIcon}>{game.icon}</div>
+                    <div style={styles.gameName}>{game.name}</div>
+                    <button style={{...styles.actionBtn, ...styles.depositBtn, padding: '8px 20px', fontSize: '0.8em', marginTop: '10px'}}>
+                      Play Now
+                    </button>
+                  </div>
+                ))}
+              </div>
+            </>
+          )}
+
+          {/* Crash Tab */}
+          {activeTab === 'crash' && (
+            <>
+              <h2 style={{marginBottom: '15px'}}>🚀 Crash Games</h2>
+              <p style={{opacity: 0.5, marginBottom: '20px'}}>Watch and win!</p>
+              <div style={styles.gamesGrid}>
+                {crashGames.map((game, i) => (
+                  <div key={i} style={styles.gameCard}>
+                    <div style={styles.gameIcon}>{game.icon}</div>
+                    <div style={styles.gameName}>{game.name}</div>
+                    <button style={{...styles.actionBtn, ...styles.depositBtn, padding: '8px 20px', fontSize: '0.8em', marginTop: '10px'}}>
+                      Play Now
+                    </button>
+                  </div>
+                ))}
+              </div>
+            </>
+          )}
+
+          {/* Virtual Sport Tab */}
+          {activeTab === 'virtual sport' && (
+            <>
+              <h2 style={{marginBottom: '15px'}}>🏏 Virtual Sport</h2>
+              <p style={{opacity: 0.5, marginBottom: '20px'}}>Virtual matches, real excitement!</p>
+              <div style={styles.gamesGrid}>
+                <div style={styles.gameCard}>
+                  <div style={{fontSize: '3em'}}>⚽</div>
+                  <div style={styles.gameName}>Virtual Football</div>
+                  <button style={{...styles.actionBtn, ...styles.depositBtn, padding: '8px 20px', fontSize: '0.8em', marginTop: '10px'}}>
+                    Play Now
+                  </button>
+                </div>
+                <div style={styles.gameCard}>
+                  <div style={{fontSize: '3em'}}>🏇</div>
+                  <div style={styles.gameName}>Horse Racing</div>
+                  <button style={{...styles.actionBtn, ...styles.depositBtn, padding: '8px 20px', fontSize: '0.8em', marginTop: '10px'}}>
+                    Play Now
+                  </button>
+                </div>
+                <div style={styles.gameCard}>
+                  <div style={{fontSize: '3em'}}>🏀</div>
+                  <div style={styles.gameName}>Virtual Basketball</div>
+                  <button style={{...styles.actionBtn, ...styles.depositBtn, padding: '8px 20px', fontSize: '0.8em', marginTop: '10px'}}>
+                    Play Now
+                  </button>
+                </div>
+              </div>
+            </>
+          )}
+
+          {/* Online Agents Status */}
+          <div style={{marginTop: '30px', padding: '15px', background: 'rgba(0,191,255,0.03)', borderRadius: '12px', border: '1px solid rgba(0,191,255,0.05)'}}>
+            <p style={{textAlign: 'center'}}>
+              🟢 {onlineAgents.length} Agent(s) Online
+            </p>
           </div>
 
-          <h2 style={{textAlign: 'center', marginTop: '30px', fontSize: '1.5em'}}>
-            📜 Recent Transactions
-          </h2>
+          {/* Recent Transactions */}
+          <h2 style={{marginTop: '30px', fontSize: '1.2em'}}>📜 Recent Transactions</h2>
           {userTransactions.slice(-5).reverse().map((t, i) => (
-            <div key={i} style={styles.transactionItem}>
+            <div key={i} style={{...styles.matchCard, marginTop: '10px'}}>
               <div style={styles.flex}>
                 <div>
                   <p style={{fontWeight: '600'}}>
@@ -1229,20 +1226,101 @@ export default function AmikoBet() {
                   </p>
                 </div>
                 <span style={
-                  t.status === 'pending' ? styles.statusPending :
-                  t.status === 'completed' || t.status === 'approved' ? styles.statusCompleted :
-                  styles.statusRejected
+                  t.status === 'pending' ? {color: '#FFA500', fontWeight: 'bold'} :
+                  t.status === 'completed' || t.status === 'approved' ? {color: '#00FF00', fontWeight: 'bold'} :
+                  {color: '#FF4444', fontWeight: 'bold'}
                 }>
                   {t.status.toUpperCase()}
                 </span>
               </div>
             </div>
           ))}
-
-          <button style={styles.buttonSecondary} onClick={() => setScreen('agentLogin')}>
-            👤 Agent Login
-          </button>
         </div>
+
+        {/* Footer */}
+        <div style={styles.footer}>
+          <p style={{opacity: 0.5, fontSize: '0.9em'}}>🔒 Secure & Instant Deposits and Withdrawals</p>
+          <p style={{opacity: 0.3, fontSize: '0.8em', marginTop: '10px'}}>© 2026 Amiko Bet • 21+ • Play Responsibly</p>
+        </div>
+
+        {/* Deposit Modal */}
+        {showDepositModal && (
+          <div style={styles.modalOverlay} onClick={() => setShowDepositModal(false)}>
+            <div style={styles.modalContent} onClick={(e) => e.stopPropagation()}>
+              <h2 style={styles.modalTitle}>💳 Deposit</h2>
+              {onlineAgents.length === 0 ? (
+                <p style={{textAlign: 'center', color: '#FF4444'}}>No agents online. Please try again later.</p>
+              ) : (
+                <>
+                  <input
+                    style={{...styles.input, ...{width: '100%', padding: '14px', margin: '10px 0', borderRadius: '12px', border: '1px solid rgba(255,255,255,0.1)', background: 'rgba(255,255,255,0.05)', color: '#fff', fontSize: '16px'}}}
+                    placeholder="Amount (ETB)"
+                    value={depositAmount}
+                    onChange={(e) => setDepositAmount(e.target.value)}
+                    type="number"
+                  />
+                  <select
+                    style={{...styles.input, ...{width: '100%', padding: '14px', margin: '10px 0', borderRadius: '12px', border: '1px solid rgba(255,255,255,0.1)', background: 'rgba(255,255,255,0.05)', color: '#fff', fontSize: '16px'}}}
+                    value={selectedAgent}
+                    onChange={(e) => setSelectedAgent(e.target.value)}
+                  >
+                    {onlineAgents.map((agent) => (
+                      <option key={agent.id} value={agent.id} style={{color: '#000'}}>
+                        🟢 {agent.name} - {agent.telebirr}
+                      </option>
+                    ))}
+                  </select>
+                  <button style={{...styles.actionBtn, ...styles.depositBtn, width: '100%'}} onClick={handleDeposit}>
+                    Confirm Deposit
+                  </button>
+                </>
+              )}
+              <button style={{...styles.actionBtn, ...styles.withdrawBtn, width: '100%', marginTop: '10px'}} onClick={() => setShowDepositModal(false)}>
+                Cancel
+              </button>
+            </div>
+          </div>
+        )}
+
+        {/* Withdraw Modal */}
+        {showWithdrawModal && (
+          <div style={styles.modalOverlay} onClick={() => setShowWithdrawModal(false)}>
+            <div style={styles.modalContent} onClick={(e) => e.stopPropagation()}>
+              <h2 style={styles.modalTitle}>💸 Withdraw</h2>
+              {onlineAgents.length === 0 ? (
+                <p style={{textAlign: 'center', color: '#FF4444'}}>No agents online. Please try again later.</p>
+              ) : (
+                <>
+                  <input
+                    style={{...styles.input, ...{width: '100%', padding: '14px', margin: '10px 0', borderRadius: '12px', border: '1px solid rgba(255,255,255,0.1)', background: 'rgba(255,255,255,0.05)', color: '#fff', fontSize: '16px'}}}
+                    placeholder="Amount (ETB)"
+                    value={withdrawAmount}
+                    onChange={(e) => setWithdrawAmount(e.target.value)}
+                    type="number"
+                  />
+                  <p style={{fontSize: '0.8em', opacity: 0.5}}>Max: {currentUser.balance} ETB</p>
+                  <select
+                    style={{...styles.input, ...{width: '100%', padding: '14px', margin: '10px 0', borderRadius: '12px', border: '1px solid rgba(255,255,255,0.1)', background: 'rgba(255,255,255,0.05)', color: '#fff', fontSize: '16px'}}}
+                    value={selectedAgent}
+                    onChange={(e) => setSelectedAgent(e.target.value)}
+                  >
+                    {onlineAgents.map((agent) => (
+                      <option key={agent.id} value={agent.id} style={{color: '#000'}}>
+                        🟢 {agent.name} - {agent.telebirr}
+                      </option>
+                    ))}
+                  </select>
+                  <button style={{...styles.actionBtn, ...styles.depositBtn, width: '100%'}} onClick={handleWithdraw}>
+                    Confirm Withdrawal
+                  </button>
+                </>
+              )}
+              <button style={{...styles.actionBtn, ...styles.withdrawBtn, width: '100%', marginTop: '10px'}} onClick={() => setShowWithdrawModal(false)}>
+                Cancel
+              </button>
+            </div>
+          </div>
+        )}
       </div>
     );
   }
