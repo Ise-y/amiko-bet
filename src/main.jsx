@@ -128,7 +128,6 @@ export default function AmikoBet() {
     }
     const amount = Number(depositAmount);
     
-    // Create pending deposit transaction
     const newTransaction = {
       id: Date.now(),
       amount: amount,
@@ -142,7 +141,7 @@ export default function AmikoBet() {
     
     setTransactions([...transactions, newTransaction]);
     setDepositAmount('');
-    setMessage(`Deposit request of ${amount} ETB sent to ${agents[selectedAgent]?.name}. Please send Telebirr to ${agents[selectedAgent]?.telebirr}`);
+    setMessage(`Deposit request of ${amount} ETB sent to ${agents[selectedAgent]?.name}. Send Telebirr to ${agents[selectedAgent]?.telebirr}`);
   };
 
   const handleWithdraw = () => {
@@ -156,7 +155,6 @@ export default function AmikoBet() {
       return;
     }
     
-    // Create pending withdrawal transaction
     const newTransaction = {
       id: Date.now(),
       amount: amount,
@@ -217,7 +215,6 @@ export default function AmikoBet() {
       return;
     }
     
-    // Find agent by phone
     const agent = Object.values(agents).find(a => a.phone === agentPhone);
     
     if (!agent || agent.password !== agentPassword) {
@@ -234,14 +231,12 @@ export default function AmikoBet() {
     const transaction = transactions.find(t => t.id === transactionId);
     if (!transaction) return;
     
-    // Update user balance
     const user = users[transaction.userPhone];
     if (user) {
       const updatedUser = { ...user, balance: user.balance + transaction.amount };
       setUsers({ ...users, [user.phone]: updatedUser });
     }
     
-    // Update transaction status
     setTransactions(transactions.map(t => 
       t.id === transactionId ? { ...t, status: 'completed' } : t
     ));
@@ -268,8 +263,7 @@ export default function AmikoBet() {
         t.id === transactionId ? { ...t, status: 'approved' } : t
       ));
       
-      // Calculate commission
-      const commission = transaction.amount * 0.05; // 5% commission
+      const commission = transaction.amount * 0.05;
       setMessage(`Withdrawal of ${transaction.amount} ETB processed! Commission: ${commission.toFixed(2)} ETB`);
     } else {
       setMessage('Insufficient balance');
@@ -475,9 +469,6 @@ export default function AmikoBet() {
               <button style={styles.buttonSecondary} onClick={() => setScreen('register')}>
                 Register
               </button>
-              <button style={styles.buttonSecondary} onClick={() => setScreen('admin')}>
-                Admin Login
-              </button>
               <button style={styles.buttonSecondary} onClick={() => setScreen('agentLogin')}>
                 Agent Login
               </button>
@@ -584,7 +575,6 @@ export default function AmikoBet() {
 
           {message && <div style={styles.message}>{message}</div>}
 
-          {/* Stats */}
           <div style={styles.grid}>
             <div style={styles.gameCard}>
               <h4>💰 Pending Deposits</h4>
@@ -603,7 +593,6 @@ export default function AmikoBet() {
             </div>
           </div>
 
-          {/* Pending Deposits */}
           <h3>📥 Pending Deposits</h3>
           {pendingDeposits.length === 0 ? (
             <p style={{opacity: 0.6}}>No pending deposits</p>
@@ -629,7 +618,6 @@ export default function AmikoBet() {
             ))
           )}
 
-          {/* Pending Withdrawals */}
           <h3>📤 Pending Withdrawals</h3>
           {agentWithdrawals.length === 0 ? (
             <p style={{opacity: 0.6}}>No pending withdrawals</p>
@@ -655,7 +643,6 @@ export default function AmikoBet() {
             ))
           )}
 
-          {/* Recent Transactions */}
           <h3>📋 Recent Transactions</h3>
           {transactions.filter(t => t.agentId === agentLoggedIn.id).slice(-5).reverse().map((t, i) => (
             <div key={i} style={styles.transactionItem}>
@@ -685,8 +672,9 @@ export default function AmikoBet() {
     );
   }
 
-  // ==================== ADMIN PANEL ====================
+  // ==================== ADMIN PANEL (HIDDEN FROM CUSTOMERS) ====================
 
+  // ADMIN ACCESS: Only through URL /admin or ?admin=true
   if (screen === 'admin' || adminLoggedIn) {
     if (!adminLoggedIn) {
       return (
@@ -728,14 +716,12 @@ export default function AmikoBet() {
               <p style={{fontSize: '2em'}}>{totalUsers}</p>
             </div>
             <div style={styles.gameCard}>
-              <h3>💰 Deposits</h3>
+              <h3>💰 Pending Deposits</h3>
               <p style={{fontSize: '2em'}}>{pendingDepositsAll.length}</p>
-              <p>Pending</p>
             </div>
             <div style={styles.gameCard}>
-              <h3>⏳ Withdrawals</h3>
+              <h3>⏳ Pending Withdrawals</h3>
               <p style={{fontSize: '2em'}}>{pendingWithdrawals.length}</p>
-              <p>Pending</p>
             </div>
           </div>
 
@@ -902,9 +888,7 @@ export default function AmikoBet() {
             </div>
           ))}
 
-          <button style={styles.buttonSecondary} onClick={() => setScreen('admin')}>
-            Admin Login
-          </button>
+          {/* ONLY Agent Login - Admin Login REMOVED */}
           <button style={styles.buttonSecondary} onClick={() => setScreen('agentLogin')}>
             Agent Login
           </button>
