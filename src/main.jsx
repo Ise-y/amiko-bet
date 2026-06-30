@@ -9,7 +9,7 @@ export default function AmikoBet() {
   const [users, setUsers] = useState(() => {
     const saved = localStorage.getItem('amikousers');
     return saved ? JSON.parse(saved) : {
-      '0911111111': { phone: '0911111111', password: 'demo123', balance: 5000, name: 'Demo User', kyc: true },
+      '0911111111': { phone: '0911111111', password: 'demo123', balance: 5000, name: 'Demo User', kyc: true, role: 'user' },
     };
   });
   const [currentUser, setCurrentUser] = useState(null);
@@ -23,6 +23,41 @@ export default function AmikoBet() {
     const saved = localStorage.getItem('amikoTransactions');
     return saved ? JSON.parse(saved) : [];
   });
+  
+  // Agent states
+  const [agentPhone, setAgentPhone] = useState('');
+  const [agentPassword, setAgentPassword] = useState('');
+  const [agentLoggedIn, setAgentLoggedIn] = useState(null);
+  const [pendingDeposits, setPendingDeposits] = useState([]);
+  const [agentWithdrawals, setAgentWithdrawals] = useState([]);
+
+  // Agents data
+  const agents = {
+    agent1: { 
+      id: 'agent1', 
+      name: 'Abebe', 
+      telebirr: '0912345678', 
+      commission: '5%',
+      phone: '0911000001',
+      password: 'agent123'
+    },
+    agent2: { 
+      id: 'agent2', 
+      name: 'Kebede', 
+      telebirr: '0923456789', 
+      commission: '3%',
+      phone: '0911000002',
+      password: 'agent123'
+    },
+    agent3: { 
+      id: 'agent3', 
+      name: 'Chala', 
+      telebirr: '0934567890', 
+      commission: '4%',
+      phone: '0911000003',
+      password: 'agent123'
+    },
+  };
 
   // Save data
   useEffect(() => {
@@ -33,10 +68,26 @@ export default function AmikoBet() {
     localStorage.setItem('amikoTransactions', JSON.stringify(transactions));
   }, [transactions]);
 
-  const agents = {
-    agent1: { name: 'Agent 1', telebirr: '0912345678', commission: '5%' },
-    agent2: { name: 'Agent 2', telebirr: '0923456789', commission: '3%' },
-  };
+  // Check pending deposits and withdrawals for agent
+  useEffect(() => {
+    if (agentLoggedIn) {
+      const pending = transactions.filter(t => 
+        t.type === 'deposit' && 
+        t.status === 'pending' && 
+        t.agentId === agentLoggedIn.id
+      );
+      setPendingDeposits(pending);
+      
+      const withdrawals = transactions.filter(t => 
+        t.type === 'withdrawal' && 
+        t.status === 'pending' &&
+        t.agentId === agentLoggedIn.id
+      );
+      setAgentWithdrawals(withdrawals);
+    }
+  }, [transactions, agentLoggedIn]);
+
+  // ==================== CUSTOMER FUNCTIONS ====================
 
   const handleRegister = () => {
     if (!phone || !password) {
@@ -49,7 +100,7 @@ export default function AmikoBet() {
     }
     setUsers({
       ...users,
-      [phone]: { phone, password, balance: 0, name: 'User', kyc: false }
+      [phone]: { phone, password, balance: 0, name: 'User', kyc: false, role: 'user' }
     });
     setMessage('Registration successful! Please login.');
     setScreen('login');
@@ -76,18 +127,22 @@ export default function AmikoBet() {
       return;
     }
     const amount = Number(depositAmount);
-    const updatedUser = { ...currentUser, balance: currentUser.balance + amount };
-    setUsers({ ...users, [currentUser.phone]: updatedUser });
-    setCurrentUser(updatedUser);
-    setTransactions([...transactions, {
+    
+    // Create pending deposit transaction
+    const newTransaction = {
       id: Date.now(),
       amount: amount,
       type: 'deposit',
-      status: 'completed',
-      date: new Date().toISOString()
-    }]);
+      status: 'pending',
+      date: new Date().toISOString(),
+      userPhone: currentUser.phone,
+      agentId: selectedAgent,
+      agentName: agents[selectedAgent]?.name
+    };
+    
+    setTransactions([...transactions, newTransaction]);
     setDepositAmount('');
-    setMessage(`Deposited ${amount} ETB successfully!`);
+    setMessage(`Deposit request of ${amount} ETB sent to ${agents[selectedAgent]?.name}. Please send Telebirr to ${agents[selectedAgent]?.telebirr}`);
   };
 
   const handleWithdraw = () => {
@@ -100,16 +155,25 @@ export default function AmikoBet() {
       setMessage('Insufficient balance');
       return;
     }
-    setTransactions([...transactions, {
+    
+    // Create pending withdrawal transaction
+    const newTransaction = {
       id: Date.now(),
       amount: amount,
       type: 'withdrawal',
       status: 'pending',
-      date: new Date().toISOString()
-    }]);
+      date: new Date().toISOString(),
+      userPhone: currentUser.phone,
+      agentId: selectedAgent,
+      agentName: agents[selectedAgent]?.name
+    };
+    
+    setTransactions([...transactions, newTransaction]);
     setWithdrawAmount('');
     setMessage(`Withdrawal request of ${amount} ETB submitted for approval`);
   };
+
+  // ==================== ADMIN FUNCTIONS ====================
 
   const handleAdminLogin = () => {
     if (adminPass === 'admin123') {
@@ -125,7 +189,7 @@ export default function AmikoBet() {
     const transaction = transactions.find(t => t.id === transactionId);
     if (!transaction) return;
     
-    const user = users[transaction.userPhone || currentUser?.phone];
+    const user = users[transaction.userPhone];
     if (user && user.balance >= transaction.amount) {
       const updatedUser = { ...user, balance: user.balance - transaction.amount };
       setUsers({ ...users, [user.phone]: updatedUser });
@@ -145,14 +209,83 @@ export default function AmikoBet() {
     setMessage('Withdrawal rejected');
   };
 
+  // ==================== AGENT FUNCTIONS ====================
+
+  const handleAgentLogin = () => {
+    if (!agentPhone || !agentPassword) {
+      setMessage('Please fill all fields');
+      return;
+    }
+    
+    // Find agent by phone
+    const agent = Object.values(agents).find(a => a.phone === agentPhone);
+    
+    if (!agent || agent.password !== agentPassword) {
+      setMessage('Invalid agent credentials');
+      return;
+    }
+    
+    setAgentLoggedIn(agent);
+    setScreen('agentDashboard');
+    setMessage(`Welcome ${agent.name}!`);
+  };
+
+  const handleConfirmDeposit = (transactionId) => {
+    const transaction = transactions.find(t => t.id === transactionId);
+    if (!transaction) return;
+    
+    // Update user balance
+    const user = users[transaction.userPhone];
+    if (user) {
+      const updatedUser = { ...user, balance: user.balance + transaction.amount };
+      setUsers({ ...users, [user.phone]: updatedUser });
+    }
+    
+    // Update transaction status
+    setTransactions(transactions.map(t => 
+      t.id === transactionId ? { ...t, status: 'completed' } : t
+    ));
+    
+    setMessage(`Deposit of ${transaction.amount} ETB confirmed!`);
+  };
+
+  const handleRejectDeposit = (transactionId) => {
+    setTransactions(transactions.map(t => 
+      t.id === transactionId ? { ...t, status: 'rejected' } : t
+    ));
+    setMessage('Deposit rejected');
+  };
+
+  const handleProcessWithdrawal = (transactionId) => {
+    const transaction = transactions.find(t => t.id === transactionId);
+    if (!transaction) return;
+    
+    const user = users[transaction.userPhone];
+    if (user && user.balance >= transaction.amount) {
+      const updatedUser = { ...user, balance: user.balance - transaction.amount };
+      setUsers({ ...users, [user.phone]: updatedUser });
+      setTransactions(transactions.map(t => 
+        t.id === transactionId ? { ...t, status: 'approved' } : t
+      ));
+      
+      // Calculate commission
+      const commission = transaction.amount * 0.05; // 5% commission
+      setMessage(`Withdrawal of ${transaction.amount} ETB processed! Commission: ${commission.toFixed(2)} ETB`);
+    } else {
+      setMessage('Insufficient balance');
+    }
+  };
+
   const Logout = () => {
     setCurrentUser(null);
+    setAgentLoggedIn(null);
     setScreen('landing');
     setAdminLoggedIn(false);
     setMessage('');
   };
 
-  // Styles
+  // ==================== STYLES ====================
+
   const styles = {
     container: {
       minHeight: '100vh',
@@ -167,6 +300,16 @@ export default function AmikoBet() {
       borderRadius: '20px',
       padding: '30px',
       maxWidth: '500px',
+      margin: '0 auto',
+      border: '1px solid rgba(255,255,255,0.1)',
+      boxShadow: '0 8px 32px rgba(0,0,0,0.3)'
+    },
+    cardWide: {
+      background: 'rgba(255,255,255,0.05)',
+      backdropFilter: 'blur(10px)',
+      borderRadius: '20px',
+      padding: '30px',
+      maxWidth: '800px',
       margin: '0 auto',
       border: '1px solid rgba(255,255,255,0.1)',
       boxShadow: '0 8px 32px rgba(0,0,0,0.3)'
@@ -203,10 +346,6 @@ export default function AmikoBet() {
       fontWeight: 'bold',
       cursor: 'pointer',
       transition: 'all 0.3s',
-      ':hover': {
-        transform: 'scale(1.02)',
-        boxShadow: '0 0 20px rgba(0,191,255,0.3)'
-      }
     },
     buttonSecondary: {
       width: '100%',
@@ -217,6 +356,30 @@ export default function AmikoBet() {
       background: 'transparent',
       color: '#fff',
       fontSize: '18px',
+      cursor: 'pointer',
+      transition: 'all 0.3s'
+    },
+    buttonSmall: {
+      padding: '10px 20px',
+      margin: '5px',
+      borderRadius: '10px',
+      border: 'none',
+      background: 'linear-gradient(45deg, #00BFFF, #00E5FF)',
+      color: '#fff',
+      fontSize: '14px',
+      fontWeight: 'bold',
+      cursor: 'pointer',
+      transition: 'all 0.3s'
+    },
+    buttonDanger: {
+      padding: '10px 20px',
+      margin: '5px',
+      borderRadius: '10px',
+      border: 'none',
+      background: 'linear-gradient(45deg, #FF4444, #FF0000)',
+      color: '#fff',
+      fontSize: '14px',
+      fontWeight: 'bold',
       cursor: 'pointer',
       transition: 'all 0.3s'
     },
@@ -242,8 +405,39 @@ export default function AmikoBet() {
       cursor: 'pointer',
       transition: 'all 0.3s',
       border: '1px solid rgba(255,255,255,0.05)'
+    },
+    transactionItem: {
+      background: 'rgba(255,255,255,0.05)',
+      padding: '15px',
+      borderRadius: '10px',
+      margin: '10px 0',
+      border: '1px solid rgba(255,255,255,0.05)'
+    },
+    statusPending: {
+      color: '#FFA500',
+      fontWeight: 'bold'
+    },
+    statusCompleted: {
+      color: '#00FF00',
+      fontWeight: 'bold'
+    },
+    statusRejected: {
+      color: '#FF0000',
+      fontWeight: 'bold'
+    },
+    statusApproved: {
+      color: '#00FF00',
+      fontWeight: 'bold'
+    },
+    flex: {
+      display: 'flex',
+      justifyContent: 'space-between',
+      alignItems: 'center',
+      gap: '10px'
     }
   };
+
+  // ==================== RENDER FUNCTIONS ====================
 
   // Render landing/login/register
   if (screen === 'landing' || screen === 'login' || screen === 'register') {
@@ -284,6 +478,9 @@ export default function AmikoBet() {
               <button style={styles.buttonSecondary} onClick={() => setScreen('admin')}>
                 Admin Login
               </button>
+              <button style={styles.buttonSecondary} onClick={() => setScreen('agentLogin')}>
+                Agent Login
+              </button>
             </>
           )}
           
@@ -313,7 +510,183 @@ export default function AmikoBet() {
     );
   }
 
-  // Admin panel
+  // ==================== AGENT LOGIN SCREEN ====================
+
+  if (screen === 'agentLogin') {
+    return (
+      <div style={styles.container}>
+        <div style={styles.card}>
+          <h1 style={styles.title}>👤 Agent Login</h1>
+          <p style={{textAlign: 'center', opacity: 0.7, marginBottom: '20px'}}>
+            Login to manage deposits and withdrawals
+          </p>
+          
+          {message && <div style={styles.message}>{message}</div>}
+          
+          <input
+            style={styles.input}
+            placeholder="Agent Phone Number"
+            value={agentPhone}
+            onChange={(e) => setAgentPhone(e.target.value)}
+            type="tel"
+          />
+          <input
+            style={styles.input}
+            placeholder="Agent Password"
+            value={agentPassword}
+            onChange={(e) => setAgentPassword(e.target.value)}
+            type="password"
+          />
+          
+          <button style={styles.button} onClick={handleAgentLogin}>
+            Login as Agent
+          </button>
+          <button style={styles.buttonSecondary} onClick={() => setScreen('landing')}>
+            Back
+          </button>
+          
+          <div style={{marginTop: '20px', padding: '10px', background: 'rgba(255,255,255,0.05)', borderRadius: '10px'}}>
+            <p style={{fontSize: '12px', opacity: 0.6}}>Demo Agents:</p>
+            <p style={{fontSize: '12px', opacity: 0.6}}>Agent 1: 0911000001 / agent123</p>
+            <p style={{fontSize: '12px', opacity: 0.6}}>Agent 2: 0911000002 / agent123</p>
+            <p style={{fontSize: '12px', opacity: 0.6}}>Agent 3: 0911000003 / agent123</p>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // ==================== AGENT DASHBOARD ====================
+
+  if (screen === 'agentDashboard' && agentLoggedIn) {
+    const totalDeposits = pendingDeposits.reduce((sum, t) => sum + t.amount, 0);
+    const totalWithdrawals = agentWithdrawals.reduce((sum, t) => sum + t.amount, 0);
+    const completedDeposits = transactions.filter(t => 
+      t.type === 'deposit' && 
+      t.status === 'completed' && 
+      t.agentId === agentLoggedIn.id
+    );
+    const totalCommission = completedDeposits.reduce((sum, t) => sum + (t.amount * 0.05), 0);
+
+    return (
+      <div style={styles.container}>
+        <div style={styles.cardWide}>
+          <div style={styles.flex}>
+            <h1 style={styles.title}>👤 Agent Dashboard</h1>
+            <button style={{...styles.buttonSecondary, width: 'auto', padding: '10px 20px'}} onClick={Logout}>
+              Logout
+            </button>
+          </div>
+          
+          <p style={{textAlign: 'center', opacity: 0.7}}>
+            Welcome, {agentLoggedIn.name}! 📱 {agentLoggedIn.telebirr}
+          </p>
+
+          {message && <div style={styles.message}>{message}</div>}
+
+          {/* Stats */}
+          <div style={styles.grid}>
+            <div style={styles.gameCard}>
+              <h4>💰 Pending Deposits</h4>
+              <p style={{fontSize: '2em', color: '#FFA500'}}>{pendingDeposits.length}</p>
+              <p>{totalDeposits} ETB</p>
+            </div>
+            <div style={styles.gameCard}>
+              <h4>💸 Pending Withdrawals</h4>
+              <p style={{fontSize: '2em', color: '#FF6B6B'}}>{agentWithdrawals.length}</p>
+              <p>{totalWithdrawals} ETB</p>
+            </div>
+            <div style={styles.gameCard}>
+              <h4>📊 Commission</h4>
+              <p style={{fontSize: '2em', color: '#00E5FF'}}>{totalCommission.toFixed(2)} ETB</p>
+              <p>From {completedDeposits.length} deposits</p>
+            </div>
+          </div>
+
+          {/* Pending Deposits */}
+          <h3>📥 Pending Deposits</h3>
+          {pendingDeposits.length === 0 ? (
+            <p style={{opacity: 0.6}}>No pending deposits</p>
+          ) : (
+            pendingDeposits.map((t, i) => (
+              <div key={i} style={styles.transactionItem}>
+                <div style={styles.flex}>
+                  <div>
+                    <p><strong>Customer:</strong> {t.userPhone}</p>
+                    <p><strong>Amount:</strong> {t.amount} ETB</p>
+                    <p><strong>Date:</strong> {new Date(t.date).toLocaleDateString()}</p>
+                  </div>
+                  <div>
+                    <button style={styles.buttonSmall} onClick={() => handleConfirmDeposit(t.id)}>
+                      ✅ Confirm
+                    </button>
+                    <button style={styles.buttonDanger} onClick={() => handleRejectDeposit(t.id)}>
+                      ❌ Reject
+                    </button>
+                  </div>
+                </div>
+              </div>
+            ))
+          )}
+
+          {/* Pending Withdrawals */}
+          <h3>📤 Pending Withdrawals</h3>
+          {agentWithdrawals.length === 0 ? (
+            <p style={{opacity: 0.6}}>No pending withdrawals</p>
+          ) : (
+            agentWithdrawals.map((t, i) => (
+              <div key={i} style={styles.transactionItem}>
+                <div style={styles.flex}>
+                  <div>
+                    <p><strong>Customer:</strong> {t.userPhone}</p>
+                    <p><strong>Amount:</strong> {t.amount} ETB</p>
+                    <p><strong>Date:</strong> {new Date(t.date).toLocaleDateString()}</p>
+                  </div>
+                  <div>
+                    <button style={styles.buttonSmall} onClick={() => handleProcessWithdrawal(t.id)}>
+                      💸 Process
+                    </button>
+                    <button style={styles.buttonDanger} onClick={() => handleRejectWithdrawal(t.id)}>
+                      ❌ Reject
+                    </button>
+                  </div>
+                </div>
+              </div>
+            ))
+          )}
+
+          {/* Recent Transactions */}
+          <h3>📋 Recent Transactions</h3>
+          {transactions.filter(t => t.agentId === agentLoggedIn.id).slice(-5).reverse().map((t, i) => (
+            <div key={i} style={styles.transactionItem}>
+              <div style={styles.flex}>
+                <div>
+                  <p>{t.type === 'deposit' ? '💰 Deposit' : '💸 Withdrawal'}</p>
+                  <p>{t.amount} ETB</p>
+                </div>
+                <div>
+                  <span style={
+                    t.status === 'pending' ? styles.statusPending :
+                    t.status === 'completed' || t.status === 'approved' ? styles.statusCompleted :
+                    styles.statusRejected
+                  }>
+                    {t.status.toUpperCase()}
+                  </span>
+                </div>
+              </div>
+            </div>
+          ))}
+
+          <button style={styles.buttonSecondary} onClick={() => setScreen('landing')}>
+            Back to Home
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  // ==================== ADMIN PANEL ====================
+
   if (screen === 'admin' || adminLoggedIn) {
     if (!adminLoggedIn) {
       return (
@@ -340,12 +713,13 @@ export default function AmikoBet() {
     }
 
     const pendingWithdrawals = transactions.filter(t => t.type === 'withdrawal' && t.status === 'pending');
+    const pendingDepositsAll = transactions.filter(t => t.type === 'deposit' && t.status === 'pending');
     const totalUsers = Object.keys(users).length;
     const totalTransactions = transactions.length;
 
     return (
       <div style={styles.container}>
-        <div style={{...styles.card, maxWidth: '800px'}}>
+        <div style={styles.cardWide}>
           <h1 style={styles.title}>👑 Admin Dashboard</h1>
           
           <div style={styles.grid}>
@@ -354,12 +728,14 @@ export default function AmikoBet() {
               <p style={{fontSize: '2em'}}>{totalUsers}</p>
             </div>
             <div style={styles.gameCard}>
-              <h3>💰 Transactions</h3>
-              <p style={{fontSize: '2em'}}>{totalTransactions}</p>
+              <h3>💰 Deposits</h3>
+              <p style={{fontSize: '2em'}}>{pendingDepositsAll.length}</p>
+              <p>Pending</p>
             </div>
             <div style={styles.gameCard}>
-              <h3>⏳ Pending</h3>
+              <h3>⏳ Withdrawals</h3>
               <p style={{fontSize: '2em'}}>{pendingWithdrawals.length}</p>
+              <p>Pending</p>
             </div>
           </div>
 
@@ -367,7 +743,7 @@ export default function AmikoBet() {
 
           <h3>📊 All Users</h3>
           {Object.values(users).map((user, i) => (
-            <div key={i} style={{...styles.gameCard, margin: '10px 0'}}>
+            <div key={i} style={styles.transactionItem}>
               <p><strong>{user.name}</strong> - 📱 {user.phone}</p>
               <p>💰 Balance: {user.balance} ETB</p>
             </div>
@@ -378,16 +754,21 @@ export default function AmikoBet() {
             <p>No pending withdrawals</p>
           ) : (
             pendingWithdrawals.map((t, i) => (
-              <div key={i} style={{...styles.gameCard, margin: '10px 0'}}>
-                <p>Amount: {t.amount} ETB</p>
-                <p>Date: {new Date(t.date).toLocaleDateString()}</p>
-                <div style={{display: 'flex', gap: '10px'}}>
-                  <button style={{...styles.button, flex: 1}} onClick={() => handleApproveWithdrawal(t.id)}>
-                    ✅ Approve
-                  </button>
-                  <button style={{...styles.buttonSecondary, flex: 1}} onClick={() => handleRejectWithdrawal(t.id)}>
-                    ❌ Reject
-                  </button>
+              <div key={i} style={styles.transactionItem}>
+                <div style={styles.flex}>
+                  <div>
+                    <p><strong>Customer:</strong> {t.userPhone}</p>
+                    <p><strong>Amount:</strong> {t.amount} ETB</p>
+                    <p><strong>Agent:</strong> {t.agentName || 'Unknown'}</p>
+                  </div>
+                  <div>
+                    <button style={styles.buttonSmall} onClick={() => handleApproveWithdrawal(t.id)}>
+                      ✅ Approve
+                    </button>
+                    <button style={styles.buttonDanger} onClick={() => handleRejectWithdrawal(t.id)}>
+                      ❌ Reject
+                    </button>
+                  </div>
                 </div>
               </div>
             ))
@@ -401,15 +782,17 @@ export default function AmikoBet() {
     );
   }
 
-  // User dashboard
+  // ==================== USER DASHBOARD ====================
+
   if (screen === 'dashboard' && currentUser) {
     const userTransactions = transactions.filter(t => t.userPhone === currentUser.phone);
     const pendingWithdrawals = userTransactions.filter(t => t.type === 'withdrawal' && t.status === 'pending');
+    const pendingDepositsUser = userTransactions.filter(t => t.type === 'deposit' && t.status === 'pending');
 
     return (
       <div style={styles.container}>
-        <div style={{...styles.card, maxWidth: '800px'}}>
-          <div style={{display: 'flex', justifyContent: 'space-between', alignItems: 'center'}}>
+        <div style={styles.cardWide}>
+          <div style={styles.flex}>
             <h1 style={styles.title}>🎯 AMIKO BET</h1>
             <button style={{...styles.buttonSecondary, width: 'auto', padding: '10px 20px'}} onClick={Logout}>
               Logout
@@ -420,6 +803,9 @@ export default function AmikoBet() {
             <p>👤 {currentUser.name || 'User'}</p>
             <p>📱 {currentUser.phone}</p>
             <h2 style={{fontSize: '3em', color: '#00E5FF'}}>💰 {currentUser.balance} ETB</h2>
+            {pendingDepositsUser.length > 0 && (
+              <p style={{color: '#FFA500'}}>⏳ {pendingDepositsUser.length} deposit(s) pending approval</p>
+            )}
           </div>
 
           {message && <div style={styles.message}>{message}</div>}
@@ -434,12 +820,20 @@ export default function AmikoBet() {
                 onChange={(e) => setDepositAmount(e.target.value)}
                 type="number"
               />
+              <select
+                style={styles.input}
+                value={selectedAgent}
+                onChange={(e) => setSelectedAgent(e.target.value)}
+              >
+                {Object.values(agents).map((agent, i) => (
+                  <option key={i} value={agent.id} style={{color: '#000'}}>
+                    {agent.name} - {agent.telebirr} ({agent.commission})
+                  </option>
+                ))}
+              </select>
               <button style={styles.button} onClick={handleDeposit}>
                 Deposit via Agent
               </button>
-              <p style={{fontSize: '12px', opacity: 0.7, marginTop: '10px'}}>
-                Agent: {agents[selectedAgent]?.name} | 📱 {agents[selectedAgent]?.telebirr}
-              </p>
             </div>
 
             <div style={styles.gameCard}>
@@ -451,6 +845,17 @@ export default function AmikoBet() {
                 onChange={(e) => setWithdrawAmount(e.target.value)}
                 type="number"
               />
+              <select
+                style={styles.input}
+                value={selectedAgent}
+                onChange={(e) => setSelectedAgent(e.target.value)}
+              >
+                {Object.values(agents).map((agent, i) => (
+                  <option key={i} value={agent.id} style={{color: '#000'}}>
+                    {agent.name} - {agent.telebirr}
+                  </option>
+                ))}
+              </select>
               <button style={styles.button} onClick={handleWithdraw}>
                 Request Withdrawal
               </button>
@@ -480,19 +885,28 @@ export default function AmikoBet() {
 
           <h3>📜 Recent Transactions</h3>
           {userTransactions.slice(-5).reverse().map((t, i) => (
-            <div key={i} style={{...styles.gameCard, margin: '5px 0'}}>
-              <p>
-                {t.type === 'deposit' ? '💰 Deposit' : '💸 Withdrawal'} - 
-                {t.amount} ETB - 
-                <span style={{color: t.status === 'pending' ? '#FFA500' : t.status === 'approved' ? '#00FF00' : '#FF0000'}}>
-                  {t.status}
+            <div key={i} style={styles.transactionItem}>
+              <div style={styles.flex}>
+                <div>
+                  <p>{t.type === 'deposit' ? '💰 Deposit' : '💸 Withdrawal'} - {t.amount} ETB</p>
+                  <p style={{fontSize: '12px', opacity: 0.6}}>Agent: {t.agentName || 'Unknown'}</p>
+                </div>
+                <span style={
+                  t.status === 'pending' ? styles.statusPending :
+                  t.status === 'completed' || t.status === 'approved' ? styles.statusCompleted :
+                  styles.statusRejected
+                }>
+                  {t.status.toUpperCase()}
                 </span>
-              </p>
+              </div>
             </div>
           ))}
 
           <button style={styles.buttonSecondary} onClick={() => setScreen('admin')}>
             Admin Login
+          </button>
+          <button style={styles.buttonSecondary} onClick={() => setScreen('agentLogin')}>
+            Agent Login
           </button>
         </div>
       </div>
