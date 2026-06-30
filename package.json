@@ -18,5 +18,14 @@
   "devDependencies": {
     "vite": "^4.0.0",
     "@vitejs/plugin-react": "^4.0.0"
-  }
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Ise-y/amiko-bet.git"
+  },
+  "type": "commonjs",
+  "bugs": {
+    "url": "https://github.com/Ise-y/amiko-bet/issues"
+  },
+  "homepage": "https://github.com/Ise-y/amiko-bet#readme"
 }
