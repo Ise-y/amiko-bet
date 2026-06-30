@@ -3,6 +3,7 @@ import ReactDOM from 'react-dom/client';
 import './index.css';
 
 export default function AmikoBet() {
+  // ===== PERSISTENT LOGIN: Load from localStorage =====
   const [screen, setScreen] = useState('landing');
   const [phone, setPhone] = useState('');
   const [password, setPassword] = useState('');
@@ -12,8 +13,25 @@ export default function AmikoBet() {
       '0911111111': { phone: '0911111111', password: 'demo123', balance: 5000, name: 'Demo User', kyc: true, role: 'user' },
     };
   });
-  const [currentUser, setCurrentUser] = useState(null);
-  const [adminLoggedIn, setAdminLoggedIn] = useState(false);
+  
+  // Load current user from localStorage
+  const [currentUser, setCurrentUser] = useState(() => {
+    const saved = localStorage.getItem('amikoCurrentUser');
+    return saved ? JSON.parse(saved) : null;
+  });
+  
+  // Load agent from localStorage
+  const [agentLoggedIn, setAgentLoggedIn] = useState(() => {
+    const saved = localStorage.getItem('amikoAgentLoggedIn');
+    return saved ? JSON.parse(saved) : null;
+  });
+  
+  // Load admin from localStorage
+  const [adminLoggedIn, setAdminLoggedIn] = useState(() => {
+    const saved = localStorage.getItem('amikoAdminLoggedIn');
+    return saved ? JSON.parse(saved) : false;
+  });
+  
   const [adminPass, setAdminPass] = useState('');
   const [depositAmount, setDepositAmount] = useState('');
   const [withdrawAmount, setWithdrawAmount] = useState('');
@@ -27,12 +45,38 @@ export default function AmikoBet() {
   // Agent states
   const [agentPhone, setAgentPhone] = useState('');
   const [agentPassword, setAgentPassword] = useState('');
-  const [agentLoggedIn, setAgentLoggedIn] = useState(null);
   const [pendingDeposits, setPendingDeposits] = useState([]);
   const [agentWithdrawals, setAgentWithdrawals] = useState([]);
 
-  // ===== FIX: Check URL for admin access =====
+  // ===== AUTO-LOGIN ON PAGE LOAD =====
   useEffect(() => {
+    // Check if user is logged in
+    const savedUser = localStorage.getItem('amikoCurrentUser');
+    if (savedUser) {
+      const user = JSON.parse(savedUser);
+      setCurrentUser(user);
+      setScreen('dashboard');
+      return;
+    }
+    
+    // Check if agent is logged in
+    const savedAgent = localStorage.getItem('amikoAgentLoggedIn');
+    if (savedAgent) {
+      const agent = JSON.parse(savedAgent);
+      setAgentLoggedIn(agent);
+      setScreen('agentDashboard');
+      return;
+    }
+    
+    // Check if admin is logged in
+    const savedAdmin = localStorage.getItem('amikoAdminLoggedIn');
+    if (savedAdmin === 'true') {
+      setAdminLoggedIn(true);
+      setScreen('admin');
+      return;
+    }
+    
+    // Check URL for admin access
     const url = window.location.href;
     if (url.includes('/admin')) {
       setScreen('admin');
@@ -125,6 +169,7 @@ export default function AmikoBet() {
       return;
     }
     setCurrentUser(user);
+    localStorage.setItem('amikoCurrentUser', JSON.stringify(user));
     setScreen('dashboard');
     setMessage('');
   };
@@ -184,6 +229,7 @@ export default function AmikoBet() {
   const handleAdminLogin = () => {
     if (adminPass === 'admin123') {
       setAdminLoggedIn(true);
+      localStorage.setItem('amikoAdminLoggedIn', JSON.stringify(true));
       setMessage('Admin logged in');
     } else {
       setMessage('Invalid admin password');
@@ -231,6 +277,7 @@ export default function AmikoBet() {
     }
     
     setAgentLoggedIn(agent);
+    localStorage.setItem('amikoAgentLoggedIn', JSON.stringify(agent));
     setScreen('agentDashboard');
     setMessage(`Welcome ${agent.name}!`);
   };
@@ -281,9 +328,14 @@ export default function AmikoBet() {
   const Logout = () => {
     setCurrentUser(null);
     setAgentLoggedIn(null);
-    setScreen('landing');
     setAdminLoggedIn(false);
+    setScreen('landing');
     setMessage('');
+    
+    // Clear all login data from localStorage
+    localStorage.removeItem('amikoCurrentUser');
+    localStorage.removeItem('amikoAgentLoggedIn');
+    localStorage.removeItem('amikoAdminLoggedIn');
   };
 
   // ==================== STYLES ====================
@@ -680,9 +732,8 @@ export default function AmikoBet() {
     );
   }
 
-  // ==================== ADMIN PANEL (HIDDEN FROM CUSTOMERS) ====================
+  // ==================== ADMIN PANEL ====================
 
-  // ADMIN ACCESS: Only through URL /admin
   if (screen === 'admin' || adminLoggedIn) {
     if (!adminLoggedIn) {
       return (
