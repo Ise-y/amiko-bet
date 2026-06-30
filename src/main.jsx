@@ -1086,7 +1086,7 @@ export default function AmikoBet() {
     );
   }
 
-  // ==================== USER DASHBOARD WITH PROMOTION BANNER ====================
+  // ==================== USER DASHBOARD WITH PROMOTION BANNER AT BOTTOM ====================
 
   if (screen === 'dashboard' && currentUser) {
     const userTransactions = transactions.filter(t => t.userPhone === currentUser.phone);
@@ -1143,9 +1143,6 @@ export default function AmikoBet() {
           <p style={{opacity: 0.7}}>Your Rank: <span style={{color: rankColors[currentUser.rank] || '#FFD700', fontWeight: 'bold'}}>{currentUser.rank}</span></p>
           <p style={{fontSize: '0.9em', opacity: 0.5}}>🏆 {totalWins} Wins | 📊 {userBets.length} Bets Placed</p>
         </div>
-
-        {/* ===== PROMOTION BANNER - ADDED HERE ===== */}
-        <PromotionBanner />
 
         {/* Balance Bar */}
         <div style={styles.balanceBar}>
@@ -1364,6 +1361,11 @@ export default function AmikoBet() {
               </div>
             </div>
           ))}
+
+          {/* ===== PROMOTION BANNER - AT THE BOTTOM ===== */}
+          {/* Users scroll down to see this after all content */}
+          <PromotionBanner />
+
         </div>
 
         {/* Footer */}

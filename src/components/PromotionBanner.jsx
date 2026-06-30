@@ -66,12 +66,13 @@ export default function PromotionBanner() {
 
   const styles = {
     container: {
-      margin: '10px 0',
+      margin: '30px 0 10px 0',
       borderRadius: '20px',
       overflow: 'hidden',
       position: 'relative',
       boxShadow: '0 10px 40px rgba(0,0,0,0.5)',
       border: '1px solid rgba(255,255,255,0.1)',
+      animation: 'slideUp 0.8s ease-out',
     },
     banner: {
       background: currentPromo.bgGradient,
@@ -82,7 +83,6 @@ export default function PromotionBanner() {
       alignItems: 'center',
       justifyContent: 'space-between',
       overflow: 'hidden',
-      animation: 'slideIn 0.8s ease-out',
     },
     content: {
       zIndex: 2,
@@ -159,14 +159,6 @@ export default function PromotionBanner() {
       transform: 'scale(1.3)',
       boxShadow: '0 0 20px rgba(0,191,255,0.5)',
     },
-    girlOverlay: {
-      position: 'absolute',
-      right: '-20px',
-      bottom: '-20px',
-      fontSize: '10em',
-      opacity: 0.15,
-      transform: 'rotate(10deg)',
-    },
     particles: {
       position: 'absolute',
       top: 0,
@@ -208,6 +200,22 @@ export default function PromotionBanner() {
       transition: 'all 0.3s',
       backdropFilter: 'blur(10px)',
       marginTop: '10px',
+    },
+    sectionTitle: {
+      textAlign: 'center',
+      fontSize: '1.5em',
+      fontWeight: '700',
+      marginTop: '30px',
+      marginBottom: '10px',
+      background: 'linear-gradient(135deg, #00BFFF, #7B2FBE)',
+      WebkitBackgroundClip: 'text',
+      WebkitTextFillColor: 'transparent',
+    },
+    sectionSubtitle: {
+      textAlign: 'center',
+      opacity: 0.5,
+      fontSize: '0.9em',
+      marginBottom: '20px',
     }
   };
 
@@ -219,9 +227,9 @@ export default function PromotionBanner() {
           0%, 100% { transform: translateY(0px) rotate(0deg); }
           50% { transform: translateY(-15px) rotate(5deg); }
         }
-        @keyframes slideIn {
-          0% { opacity: 0; transform: translateX(30px); }
-          100% { opacity: 1; transform: translateX(0); }
+        @keyframes slideUp {
+          0% { opacity: 0; transform: translateY(30px); }
+          100% { opacity: 1; transform: translateY(0); }
         }
         @keyframes fall {
           0% { transform: translateY(-20px) rotate(0deg); opacity: 1; }
@@ -231,15 +239,15 @@ export default function PromotionBanner() {
           0% { transform: rotate(0deg); }
           100% { transform: rotate(360deg); }
         }
-        @keyframes pulse {
-          0%, 100% { transform: scale(1); }
-          50% { transform: scale(1.05); }
-        }
         .promo-banner:hover {
           transform: scale(1.01);
           transition: transform 0.3s ease;
         }
       `}</style>
+
+      {/* Section Title */}
+      <h2 style={styles.sectionTitle}>🎯 Exclusive Promotions</h2>
+      <p style={styles.sectionSubtitle}>Scroll down to see our special offers!</p>
 
       <div style={styles.container} className="promo-banner">
         <div style={styles.banner}>
