@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import ReactDOM from 'react-dom/client';
 import './index.css';
 import './animations.css';
+import PromotionBanner from './components/PromotionBanner';
 
 export default function AmikoBet() {
   const [screen, setScreen] = useState('landing');
@@ -508,7 +509,6 @@ export default function AmikoBet() {
       color: '#00BFFF',
       background: 'rgba(0,191,255,0.1)',
     },
-    // Welcome Banner
     welcomeBanner: {
       background: 'linear-gradient(135deg, rgba(0,191,255,0.1), rgba(123,47,190,0.1))',
       padding: '20px',
@@ -1086,7 +1086,7 @@ export default function AmikoBet() {
     );
   }
 
-  // ==================== USER DASHBOARD (ZPLAY-STYLE WITH RANK) ====================
+  // ==================== USER DASHBOARD WITH PROMOTION BANNER ====================
 
   if (screen === 'dashboard' && currentUser) {
     const userTransactions = transactions.filter(t => t.userPhone === currentUser.phone);
@@ -1096,7 +1096,6 @@ export default function AmikoBet() {
     const userBets = userTransactions.filter(t => t.type === 'bet');
     const totalWins = userBets.filter(t => t.status === 'approved').length;
 
-    // Sports matches data
     const matches = [
       { home: 'Ivory Coast', away: 'Norway', odds: { home: 3.6, draw: 3.5, away: 2.15 } },
       { home: 'France', away: 'Sweden', odds: { home: 1.3, draw: 6.1, away: 9.8 } },
@@ -1118,7 +1117,6 @@ export default function AmikoBet() {
       { icon: '🃏', name: 'HiLo' },
     ];
 
-    // Rank colors
     const rankColors = {
       'Bronze': '#CD7F32',
       'Silver': '#C0C0C0',
@@ -1145,6 +1143,9 @@ export default function AmikoBet() {
           <p style={{opacity: 0.7}}>Your Rank: <span style={{color: rankColors[currentUser.rank] || '#FFD700', fontWeight: 'bold'}}>{currentUser.rank}</span></p>
           <p style={{fontSize: '0.9em', opacity: 0.5}}>🏆 {totalWins} Wins | 📊 {userBets.length} Bets Placed</p>
         </div>
+
+        {/* ===== PROMOTION BANNER - ADDED HERE ===== */}
+        <PromotionBanner />
 
         {/* Balance Bar */}
         <div style={styles.balanceBar}>
@@ -1213,7 +1214,6 @@ export default function AmikoBet() {
                 ))}
               </div>
 
-              {/* Bet Placement Section */}
               {selectedMatch && (
                 <div style={{...styles.modalContent, maxWidth: '500px', margin: '20px auto'}}>
                   <h3 style={styles.modalTitle}>Place Bet</h3>
