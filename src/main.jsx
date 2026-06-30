@@ -12,23 +12,8 @@ export default function AmikoBet() {
       '0911111111': { phone: '0911111111', password: 'demo123', balance: 5000, name: 'Demo User', kyc: true, role: 'user' },
     };
   });
-  
-  // Load current user from localStorage
-  const [currentUser, setCurrentUser] = useState(() => {
-    const saved = localStorage.getItem('amikoCurrentUser');
-    return saved ? JSON.parse(saved) : null;
-  });
-  
-  const [agentLoggedIn, setAgentLoggedIn] = useState(() => {
-    const saved = localStorage.getItem('amikoAgentLoggedIn');
-    return saved ? JSON.parse(saved) : null;
-  });
-  
-  const [adminLoggedIn, setAdminLoggedIn] = useState(() => {
-    const saved = localStorage.getItem('amikoAdminLoggedIn');
-    return saved ? JSON.parse(saved) : false;
-  });
-  
+  const [currentUser, setCurrentUser] = useState(null);
+  const [adminLoggedIn, setAdminLoggedIn] = useState(false);
   const [adminPass, setAdminPass] = useState('');
   const [depositAmount, setDepositAmount] = useState('');
   const [withdrawAmount, setWithdrawAmount] = useState('');
@@ -39,66 +24,18 @@ export default function AmikoBet() {
     return saved ? JSON.parse(saved) : [];
   });
   
+  // Agent states
   const [agentPhone, setAgentPhone] = useState('');
   const [agentPassword, setAgentPassword] = useState('');
+  const [agentLoggedIn, setAgentLoggedIn] = useState(null);
   const [pendingDeposits, setPendingDeposits] = useState([]);
   const [agentWithdrawals, setAgentWithdrawals] = useState([]);
 
-  // ===== CLEAR ALL SESSIONS =====
-  const clearAllSessions = () => {
-    localStorage.removeItem('amikoCurrentUser');
-    localStorage.removeItem('amikoAgentLoggedIn');
-    localStorage.removeItem('amikoAdminLoggedIn');
-  };
-
-  // ===== SWITCH ACCOUNT =====
-  const switchAccount = () => {
-    clearAllSessions();
-    setCurrentUser(null);
-    setAgentLoggedIn(null);
-    setAdminLoggedIn(false);
-    setScreen('landing');
-    setMessage('🔄 Logged out. You can now login with a different account.');
-  };
-
-  // ===== AUTO-LOGIN ON PAGE LOAD =====
+  // ===== FIX: Check URL for admin access =====
   useEffect(() => {
     const url = window.location.href;
     if (url.includes('/admin')) {
       setScreen('admin');
-      return;
-    }
-    
-    const savedUser = localStorage.getItem('amikoCurrentUser');
-    if (savedUser) {
-      const user = JSON.parse(savedUser);
-      if (users[user.phone]) {
-        setCurrentUser(user);
-        setScreen('dashboard');
-        return;
-      } else {
-        clearAllSessions();
-      }
-    }
-    
-    const savedAgent = localStorage.getItem('amikoAgentLoggedIn');
-    if (savedAgent) {
-      const agent = JSON.parse(savedAgent);
-      const agentExists = Object.values(agents).some(a => a.phone === agent.phone);
-      if (agentExists) {
-        setAgentLoggedIn(agent);
-        setScreen('agentDashboard');
-        return;
-      } else {
-        clearAllSessions();
-      }
-    }
-    
-    const savedAdmin = localStorage.getItem('amikoAdminLoggedIn');
-    if (savedAdmin === 'true') {
-      setAdminLoggedIn(true);
-      setScreen('admin');
-      return;
     }
   }, []);
 
@@ -139,6 +76,7 @@ export default function AmikoBet() {
     localStorage.setItem('amikoTransactions', JSON.stringify(transactions));
   }, [transactions]);
 
+  // Check pending deposits and withdrawals for agent
   useEffect(() => {
     if (agentLoggedIn) {
       const pending = transactions.filter(t => 
@@ -186,14 +124,9 @@ export default function AmikoBet() {
       setMessage('Invalid credentials');
       return;
     }
-    
-    clearAllSessions();
     setCurrentUser(user);
-    localStorage.setItem('amikoCurrentUser', JSON.stringify(user));
     setScreen('dashboard');
-    setMessage(`Welcome ${user.name || 'User'}!`);
-    setPhone('');
-    setPassword('');
+    setMessage('');
   };
 
   const handleDeposit = () => {
@@ -250,9 +183,7 @@ export default function AmikoBet() {
 
   const handleAdminLogin = () => {
     if (adminPass === 'admin123') {
-      clearAllSessions();
       setAdminLoggedIn(true);
-      localStorage.setItem('amikoAdminLoggedIn', JSON.stringify(true));
       setMessage('Admin logged in');
     } else {
       setMessage('Invalid admin password');
@@ -299,13 +230,9 @@ export default function AmikoBet() {
       return;
     }
     
-    clearAllSessions();
     setAgentLoggedIn(agent);
-    localStorage.setItem('amikoAgentLoggedIn', JSON.stringify(agent));
     setScreen('agentDashboard');
     setMessage(`Welcome ${agent.name}!`);
-    setAgentPhone('');
-    setAgentPassword('');
   };
 
   const handleConfirmDeposit = (transactionId) => {
@@ -352,12 +279,11 @@ export default function AmikoBet() {
   };
 
   const Logout = () => {
-    clearAllSessions();
     setCurrentUser(null);
     setAgentLoggedIn(null);
-    setAdminLoggedIn(false);
     setScreen('landing');
-    setMessage('Logged out successfully!');
+    setAdminLoggedIn(false);
+    setMessage('');
   };
 
   // ==================== STYLES ====================
@@ -459,18 +385,6 @@ export default function AmikoBet() {
       cursor: 'pointer',
       transition: 'all 0.3s'
     },
-    buttonWarning: {
-      padding: '10px 20px',
-      margin: '5px',
-      borderRadius: '10px',
-      border: 'none',
-      background: 'linear-gradient(45deg, #FFA500, #FF8C00)',
-      color: '#fff',
-      fontSize: '14px',
-      fontWeight: 'bold',
-      cursor: 'pointer',
-      transition: 'all 0.3s'
-    },
     message: {
       padding: '10px',
       borderRadius: '10px',
@@ -521,8 +435,7 @@ export default function AmikoBet() {
       display: 'flex',
       justifyContent: 'space-between',
       alignItems: 'center',
-      gap: '10px',
-      flexWrap: 'wrap'
+      gap: '10px'
     }
   };
 
@@ -659,14 +572,9 @@ export default function AmikoBet() {
         <div style={styles.cardWide}>
           <div style={styles.flex}>
             <h1 style={styles.title}>👤 Agent Dashboard</h1>
-            <div style={styles.flex}>
-              <button style={{...styles.buttonWarning, width: 'auto', padding: '10px 20px'}} onClick={switchAccount}>
-                🔄 Switch Account
-              </button>
-              <button style={{...styles.buttonSecondary, width: 'auto', padding: '10px 20px'}} onClick={Logout}>
-                Logout
-              </button>
-            </div>
+            <button style={{...styles.buttonSecondary, width: 'auto', padding: '10px 20px'}} onClick={Logout}>
+              Logout
+            </button>
           </div>
           
           <p style={{textAlign: 'center', opacity: 0.7}}>
@@ -772,8 +680,9 @@ export default function AmikoBet() {
     );
   }
 
-  // ==================== ADMIN PANEL ====================
+  // ==================== ADMIN PANEL (HIDDEN FROM CUSTOMERS) ====================
 
+  // ADMIN ACCESS: Only through URL /admin
   if (screen === 'admin' || adminLoggedIn) {
     if (!adminLoggedIn) {
       return (
@@ -807,17 +716,7 @@ export default function AmikoBet() {
     return (
       <div style={styles.container}>
         <div style={styles.cardWide}>
-          <div style={styles.flex}>
-            <h1 style={styles.title}>👑 Admin Dashboard</h1>
-            <div style={styles.flex}>
-              <button style={{...styles.buttonWarning, width: 'auto', padding: '10px 20px'}} onClick={switchAccount}>
-                🔄 Switch Account
-              </button>
-              <button style={{...styles.buttonSecondary, width: 'auto', padding: '10px 20px'}} onClick={Logout}>
-                Logout
-              </button>
-            </div>
-          </div>
+          <h1 style={styles.title}>👑 Admin Dashboard</h1>
           
           <div style={styles.grid}>
             <div style={styles.gameCard}>
@@ -869,8 +768,8 @@ export default function AmikoBet() {
             ))
           )}
 
-          <button style={styles.buttonSecondary} onClick={() => setScreen('landing')}>
-            Back to Home
+          <button style={styles.buttonSecondary} onClick={Logout}>
+            Logout
           </button>
         </div>
       </div>
@@ -889,14 +788,9 @@ export default function AmikoBet() {
         <div style={styles.cardWide}>
           <div style={styles.flex}>
             <h1 style={styles.title}>🎯 AMIKO BET</h1>
-            <div style={styles.flex}>
-              <button style={{...styles.buttonWarning, width: 'auto', padding: '10px 20px'}} onClick={switchAccount}>
-                🔄 Switch Account
-              </button>
-              <button style={{...styles.buttonSecondary, width: 'auto', padding: '10px 20px'}} onClick={Logout}>
-                Logout
-              </button>
-            </div>
+            <button style={{...styles.buttonSecondary, width: 'auto', padding: '10px 20px'}} onClick={Logout}>
+              Logout
+            </button>
           </div>
           
           <div style={{textAlign: 'center', margin: '20px 0'}}>
